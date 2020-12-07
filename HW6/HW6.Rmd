@@ -1,0 +1,274 @@
+---
+title: "Regression analysis_Homework Assignment 6"
+author: "心理所碩二 R08227112 林子堯"
+date: "2020/12/07"
+output: 
+  html_document:
+    css: style.css
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	message = FALSE, 	warning = FALSE, comment = "",
+	fig.width = 5, fig.asp = 0.68, fig.align = "center",
+	eval = TRUE
+)
+```
+
+# A dose-response experiment yielded the following data:
+
+```{r}
+library(tidyverse)
+data <- data.frame(LogDose = c(0.71, 1.00, 1.31, 1.48, 1.61, 1.70),
+                   GroupSize = c(49, 48, 48, 49, 50, 48),
+                   Response = c(16, 18, 34, 47, 47, 48)) %>% 
+  mutate(NoResponse = GroupSize - Response, 
+         Propotion = Response / GroupSize)
+knitr::kable(data, digits = 2)
+```
+
+# **Fit a binomial regression model. Check if logit or probit models are satisfactory. Can you find a better fit? Please do residual analysis and check transformations of the dose scale and models with overdispersion.**
+
+Our binomial regression model is
+
+$$
+Y_i \sim Binom(N_i, \pi_i) \\
+\pi_i = g^{-1}(\eta_i) = g^{-1}(\boldsymbol{x_i^{\top} \beta})
+$$
+
+where $i = 1, \dots, 6$ indicats each grouped observation, and $y_i$ is the response number in the group size $N_i$ with the response probability $\pi_i$, which is connected with linear predictor $\eta_i = \boldsymbol{x_i^{\top} \beta} = \beta_0 + \beta_1 x_i$ by link function $g(.)$.
+
+<br />
+
+#### Logit model
+
+If we choose the logit link function,
+
+```{r}
+binom_logit <- glm(formula = cbind(Response, NoResponse) ~ 1 + LogDose, 
+                   data = data, 
+                   family = binomial(link = "logit"))
+## or can write as 
+# binom_logit <- glm(formula = Propotion ~ 1 + LogDose, 
+#                    data = data, 
+#                    weights = GroupSize,
+#                    family = binomial(link = "logit"))
+summary(binom_logit)
+```
+
+the fitted logit model is:
+
+$$
+g(\hat{\pi_i}) = \ln\frac{\pi_i}{1-\pi_i} = -4.45 + 4.46 (LogDose)_i 
+$$
+
+and each $\beta$ is significance under the significance level $\alpha = 0.05$.
+
+<br />
+
+#### Probit model:
+
+If we choose the probit link function,
+
+```{r}
+binom_probit <- glm(formula = cbind(Response, NoResponse) ~ 1 + LogDose, 
+                    data = data, 
+                    family = binomial(link = "probit"))
+summary(binom_probit)
+```
+
+the fitted probit model is:$$
+g(\hat{\pi_i}) = \Phi^{-1}(\hat{\pi}_i) = -2.63 + 2.64 (LogDose)_i 
+$$where $\Phi(.)$ is the cdf of the standard normal distribution. The result shows that each $\beta$ is also significance.
+
+<br />
+
+#### Complementary log-log model:
+
+If we choose the complementary log-log link function,
+
+```{r}
+binom_cloglog <- glm(formula = cbind(Response, NoResponse) ~ 1 + LogDose, 
+                     data = data, 
+                     family = binomial(link = "cloglog"))
+summary(binom_cloglog)
+```
+
+the fitted complementary log-log model is:$$
+g(\hat{\pi_i}) = log(-log(1-\hat{\pi}_i)) = -3.24 + 2.76 (LogDose)_i 
+$$The result shows that each $\beta$ is also significance.
+
+#### Model comparison
+
+At first glance, the estimators $\boldsymbol{\hat{\beta}}$ form binomial models seem very different from each other. Since the logistic distribution function has variance $\pi^2/3$ and the extreme-value distribution function has variance $\pi^2/6$. We can rescale the estimated coefficients of the probit model and the complementary log-log model with factor $\pi/\sqrt3$ and $\sqrt2 (= \frac{\pi/\sqrt3}{\pi/\sqrt6})$ respectively. The result is at following table, we can find adjust coefficients is closer to the logit model result.
+
+```{r}
+beta <- data.frame(beta_logit = binom_logit$coefficients,
+                   beta_probit = binom_probit$coefficients,
+                   beta_probit_adj = binom_probit$coefficients * (pi/sqrt(3)),
+                   beta_cloglog = binom_cloglog$coefficients,
+                   beta_cloglog_adj = binom_cloglog$coefficients * sqrt(2))
+knitr::kable(beta, digits = 2)
+```
+
+We also can present the response functions $\hat{\pi}_i = g^{-1}(\boldsymbol{x_i^\top \hat{\beta}})$ of the three binary regression models
+
+```{r}
+ggplot(data, aes(x = LogDose, y = Propotion, weight = GroupSize)) + 
+  geom_point() + 
+  geom_smooth(aes(color = "blue", fill = "lightblue", linetype = "solid"),
+              method = "glm", formula =  y ~ 1 + x,
+              method.args = list(family = binomial(link = "logit")),
+              alpha = 0.25) +
+  geom_smooth(aes(color = "red", fill = "lightpink", linetype = "longdash"),
+              method = "glm", formula =  y ~ 1 + x,
+              method.args = list(family = binomial(link = "probit")),
+              alpha = 0.25) +
+  geom_smooth(aes(color = "forestgreen", fill = "lightgreen", linetype = "dashed"),
+              method = "glm", formula =  y ~ 1 + x,
+              method.args = list(family = binomial(link = "cloglog")),
+              alpha = 0.25) +
+  scale_color_identity("Binomial model", 
+                       breaks = c("blue", "red", "forestgreen"),
+                       labels = c("logit", "probit", "cloglog"), 
+                       guide = "legend") +
+  scale_fill_identity("Binomial model", 
+                      breaks = c("lightblue", "lightpink", "lightgreen"),
+                      labels = c("logit", "probit", "cloglog"), 
+                      guide = "legend") +
+  scale_linetype_identity("Binomial model", 
+                          breaks = c("solid", "longdash", "dashed"),
+                          labels = c("logit", "probit", "cloglog"), 
+                          guide = "legend") +
+  theme_classic()
+
+```
+
+It shows that the response function of logit and probit models are very similar and symmetric at the mean. In the contrast, the response function of the complementary log--log model is asymmetric and showing a faster approach towards 1 as  $\eta$ increasing. However, the complementary log--log model is seemingly closer to the true proportion ($\bar{y}_i = y_i/N_i$) than the other models.
+
+To compare which model has the best goodness-of-fit, we can compared the Pearson statistic and the deviance of the each model. In addition, if we consider the goodness-of-fit and the model's complexity at the same time, the AIC or BIC is alternative criterion for the model choosing.
+
+```{r}
+binom_models <- list(logit = binom_logit, probit = binom_probit, cloglog = binom_cloglog)
+criterion <- data.frame(
+  perason_statistic = sapply(binom_models, function(.binom){
+    sum(residuals(.binom, type = "pearson")^2)
+  }),
+  deviance = sapply(binom_models, deviance),
+  AIC = sapply(binom_models, AIC),
+  BIC = sapply(binom_models, BIC)
+) 
+
+knitr::kable(criterion, digits = 2)
+```
+
+The result shows that the complementary log-log model has the smallest value in each criteria (including the Pearson statistic to BIC), indicating that this model is better than others. Otherwise, the Pearson statistic and the deviance are asymptotic chi-square distribution with degree of freedom 4 (= the number of groups - the number of estimated coefficients). Under the significance level $\alpha = 0.05$, the critical value is $\chi^2_{0.95, df = 4} =$ `r format(qchisq(0.95, binom_cloglog$df.residual), digits = 2)` . The logit and probit model are probably lack of fit. In the conclusion, the complementary log-log model has the best fitted performance.
+
+#### Residual analysis
+
+The following table and plot are presented (standardized) Pearson residuals and (standardized) deviance residuals of the complementary log-log model. The standardized Pearson residuals and standardized deviance residuals are approximately $N(0, 1)$. So we can detect whether is there outlier existing or any misspecified assumption in this model.
+
+```{r}
+binom_cloglog_res = data.frame(
+  LogDose = data$LogDose,
+  y_bar = data$Propotion,
+  y_fit = fitted(binom_cloglog),
+  pearson_res = residuals(binom_cloglog, type = "pearson"),
+  stand_pearson_res = rstandard(binom_cloglog, type = "pearson"),
+  deviance_res = residuals(binom_cloglog, type = "deviance"),
+  stand_deviance_res = rstandard(binom_cloglog, type = "deviance")
+)
+knitr::kable(binom_cloglog_res, digits = 2)
+```
+
+```{r}
+ggplot(binom_cloglog_res, aes(x = y_fit)) + 
+  geom_point(aes(y = stand_pearson_res, shape = 19)) +
+  geom_point(aes(y = stand_deviance_res, shape = 1)) +
+  geom_hline(yintercept = qnorm(c(0.025, 0.5, 0.975), mean = 0, sd = 1), 
+             color = c("red", "blue", "red"), 
+             linetype = c("dashed", "solid", "dashed")) +
+  scale_shape_identity("Residual", guide = "legend",
+                       breaks = c(19, 1), labels = c("Pearson", "deviance")) +
+  labs(y = "standardized (Pearson / deviance) residual") +
+  theme_classic()
+```
+
+Though the standard Pearson residual of the first observation is outer the criteria a little bit (but standard deviance residual is not), I thought there is not strong evidence to indicate it is an outlier. By the way, we can't find any systematic error between the residuals and y_fit (or LogDose) and the residuals are seemingly independent, so the complementary log-log model may have no problem.
+
+#### Transformation
+
+If we consider the higher order ($LogDose^2$) in to the model
+
+$$
+Y_i \sim Binom(N_i, \pi_i) \\
+\pi_i = g^{-1}(\eta_i) = g^{-1}(\beta_0 + \beta_1 (LogDose)_i + \beta_2 (LogDose)_i^2)
+$$
+
+where $g(.)$ still use the cloglog link.
+
+```{r}
+binom_cloglog2 <- glm(formula = cbind(Response, NoResponse) ~ 1 + LogDose + I(LogDose^2), 
+                      data = data, 
+                      family = binomial(link = "cloglog"))
+summary(binom_cloglog2)
+```
+
+The fitted result show that coefficients $\beta_0, \beta_1 \; \& \; \beta_2$ are not significance any more. Even though, it has the smaller AIC (or BIC) value than the original model.
+
+```{r}
+anova(binom_cloglog, binom_cloglog2, test = "LRT")
+```
+
+But from the likelihood ratio test, there is not significance difference between the original model and the higher order model. By the principle of simplicity, I think the original complementary log-log model is the better choice. From the residual plot, we also can't find any other relationship between residuals and LogDose We don't need higher order on the LogDose.
+
+On the other side, if we don't take the "log" on the Dose covariate, our new model is$$
+Y_i \sim Binom(N_i, \pi_i) \\
+\pi_i = g^{-1}(\eta_i) = g^{-1}(\beta_0 + \beta_1 (Dose)_i )
+$$
+
+where $g(.)$ still use the cloglog link.
+
+```{r}
+binom_cloglog_dose <- glm(formula = cbind(Response, NoResponse) ~ 1 + I(exp(LogDose)), 
+                      data = data, 
+                      family = binomial(link = "cloglog"))
+summary(binom_cloglog_dose)
+```
+
+The fitted new complementary log-log model is:$$
+g(\hat{\pi_i}) = log(-log(1-\hat{\pi}_i)) = -2.72 + 0.80 (Dose)_i 
+$$The result shows that each $\beta$ is also significance. Furthermore, it also shows that the new model have the better fit than the original model! The Pearson statistic (= `r format(sum(residuals(binom_cloglog_dose, type = "pearson")^2), digits = 2)`), deviance (= `r format(deviance(binom_cloglog_dose), digits = 2)`), AIC(= `r format(AIC(binom_cloglog_dose), digits = 2)`) and BIC(= `r format(BIC(binom_cloglog_dose), digits = 2)`) are all smaller. Maybe it is the better candidate model.
+
+#### Model with overdispersion
+
+However, we may observe overdispersion in the original complementary log-log model. We assume
+
+$$
+Var(y_i) = \phi \frac{\pi_i(1-\pi_i)}{N_i}.
+$$
+
+The overdispersion paramter $\phi$ can be estimated as the average Pearson statistic $\chi^2$ or the average deviance $D$:
+
+$$
+\hat{\phi}_p = \frac{\chi^2}{G-p} \quad \text{or} \quad \hat{\phi}_D = \frac{D}{G-p}
+$$
+
+where $G$ is the number of the grouped observation.
+
+```{r}
+(phi_p <- criterion$perason_statistic[3] / binom_cloglog$df.residual)
+(phi_D <- criterion$deviance[3] / binom_cloglog$df.residual)
+```
+
+We find $\hat{\phi}_p$ and $\hat{\phi}_D$ are larger than 1, so it indicates that there is overdispersion.
+
+An appropriate approach to this situation is using a quasi-likelihood model.
+
+```{r}
+quasibinom_cloglog <- update(binom_cloglog, 
+                             family = quasibinomial(link = "cloglog"))
+summary(quasibinom_cloglog)
+```
+
+The estimated coefficient $\hat{\beta}_0 = -3.24 \; \& \; \hat{\beta}_1 =2.76$ is as same as the original complementary log-log model, but with $\hat{\phi} = 1.88$. Other difference is the standard errors of the $\boldsymbol{\hat{\beta}}$ become larger, but luckily, $\boldsymbol{\hat{\beta}}$ are still significance.

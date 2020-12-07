@@ -1,0 +1,324 @@
+---
+title: "Regression analysis_Homework Assignment 3"
+author: "心理所碩二 R08227112 林子堯"
+date: "2020/10/19"
+output: 
+  html_document:
+    css: style.css
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	message = FALSE, 	warning = FALSE, comment = "",
+	fig.width = 5, fig.asp = 0.68, fig.align = "center",
+	eval = TRUE
+)
+```
+
+# 1. Consider the following two models where $E(\boldsymbol{\varepsilon}) = 0$ and $Var(\boldsymbol{\varepsilon}) = \sigma^2\boldsymbol{I}$:
+
+- **Model A:** $\boldsymbol{y = X_1 \beta_1 + \varepsilon}$
+- **Model B:** $\boldsymbol{y = X_1 \beta_1 + X_2 \beta_2+ \varepsilon}$
+
+**Show that $R_A^2 \leq R_B^2$.**
+
+By the definition, the $R^2$ is 
+
+$$\begin{align}
+R^2 &= \frac{SSR}{SST} = 1 - \frac{SSE}{SST} \\
+&= 1 - \frac{\sum_{i=1}^n(y_i - \hat{y}_i)^2}{\sum_{i=1}^n (y_i - \bar{y})^2} \\ 
+&= 1 - \frac{\boldsymbol{\hat{\varepsilon}^{\top}\hat{\varepsilon}}}{\boldsymbol{yCy}} 
+\end{align}$$
+
+where $\boldsymbol{C} = \boldsymbol{I} - \frac{1}{n}\boldsymbol{11^{\top}}$. Let $\boldsymbol{\hat{\beta}_{1A}} = \underset{\boldsymbol{\beta_1}}{\arg \min} \left \| \boldsymbol{y - x_1\beta_1} \right \|^2$ and $(\boldsymbol{\hat{\beta}_{1B}, \hat{\beta}_{2B})^{\top}} = \underset{\boldsymbol{\beta_1, \beta_2}}{\arg \min} \left \| \boldsymbol{y - (x_1\beta_1 - x_2\beta_2)} \right \|^2$. By the definition of least square estimation, one has
+
+$$\begin{align}
+\boldsymbol{\hat{\varepsilon}_B^{\top}\hat{\varepsilon}_B} &= \underset{\boldsymbol{(\beta_1, \beta_2)^{\top}}}{\min} \left \| \boldsymbol{y - (x_1\beta_1 + x_2\beta_2)}\right \|^2 \\
+&\leq \left \| \boldsymbol{y - (x_1\beta_1 + \boldsymbol{x_2} 0)}\right \|^2
+\end{align}$$
+
+for any $\boldsymbol{\beta_1}$ in the last part of the inequation. Therefore one has
+
+$$\begin{align}
+\boldsymbol{\hat{\varepsilon}_B^{\top}\hat{\varepsilon}_B} &= \left \| \boldsymbol{y - (x_1\hat{\beta}_{1B} + \boldsymbol{x_2}\hat{\beta}_{2B})}\right \|^2 \\
+&\leq \left \| \boldsymbol{y - (x_1\hat{\beta}_{1A})}\right \|^2 = \boldsymbol{\hat{\varepsilon}_A^{\top}\hat{\varepsilon}_A}
+\end{align}$$
+$$
+\Rightarrow R_A^2 = 1 - \frac{\boldsymbol{\hat{\varepsilon_A}^{\top}\hat{\varepsilon_A}}}{\boldsymbol{yCy}}  \leq 1 - \frac{\boldsymbol{\hat{\varepsilon_B}^{\top}\hat{\varepsilon_B}}}{\boldsymbol{yCy}} = R_B^2
+$$
+
+
+# 2. Suppose we need to compare the effects of two drugs each administered to $n$ subjects. The model for the effect of the first drug is
+$$y_{i1} = \beta_0 + \beta_1x_{i1} + \varepsilon_{i1}$$
+**while for the second drug it is**
+$$y_{i2} = \beta_0 + \beta_2x_{i2} + \varepsilon_{i2}$$
+**and in each case $i = 1, . . . , n$ and $\bar{x}_1 = \bar{x}_2 = 0$. Assume that all observations are independent and that for each $i$ both $\varepsilon_{1i}$ and $\varepsilon_{2i}$ are normally distributed with mean 0 and variance $\sigma^2$.**
+
+## a. Obtain the least squares estimator for $\boldsymbol{\beta} = (\beta_0, \beta_1, \beta_2)^{\top}$ and its covariance matrix.
+
+Since $\beta_0$'s in both models are equal, I convert them to a multiple linear regression model, 
+
+$$ \boldsymbol{y = X\beta + \varepsilon}$$
+
+where
+
+$$
+\boldsymbol{y} = \begin{pmatrix} y_{11} \\ \vdots \\ y_{n1} \\ y_{12} \\ \vdots \\ y_{n2} \end{pmatrix}, \quad 
+\boldsymbol{X} =  \begin{pmatrix} 1 & x_{11} & 0 \\ \vdots & \vdots & \vdots \\ 1 & x_{n1} & 0 \\ 1 & 0 & x_{12} \\ \vdots & \vdots & \vdots \\ 1 & 0 & x_{n2} \end{pmatrix}, \quad
+\boldsymbol{\beta} = \begin{pmatrix} \beta_0 \\ \beta_1 \\ \beta_2 \end{pmatrix}, \text{ and } 
+\boldsymbol{\varepsilon} = \begin{pmatrix} \varepsilon_{11} \\ \vdots \\ \varepsilon_{n1} \\ \varepsilon_{12} \\ \vdots \\ \varepsilon_{n2} \end{pmatrix} \sim N_{2n}(\boldsymbol{0}, \sigma^2\boldsymbol{I})
+$$
+
+The least squares estimator for $\boldsymbol{\beta}$ is 
+
+$$
+\boldsymbol{\hat{\beta} = (X^{\top}X)^{-1}X^{\top}y}
+$$
+
+and the covariance matrix of $\hat{\boldsymbol{\beta}}$ is
+
+$$ \begin{align}
+Cov(\boldsymbol{\hat{\beta}}) &= \boldsymbol{(X^{\top}X)^{-1}X^{\top}}Cov(\boldsymbol{y})\boldsymbol{((X^{\top}X)^{-1}X^{\top})^{\top}} \\
+&= \sigma^2\boldsymbol{(X^{\top}X)^{-1}}
+\end{align}$$
+
+## b. Estimate $\sigma^2$.
+
+The residual is $\boldsymbol{\hat{\varepsilon} = y - \hat{y} = y - X\hat{\beta} = (I-H)y}$ and the expectation of sum of square residual is
+
+$$\begin{align}
+E(\boldsymbol{\hat{\varepsilon}^{\top}\hat{\varepsilon}}) &= E(\boldsymbol{y^{\top}(I-H)y}) \\
+&= E(\boldsymbol{y^{\top}})\boldsymbol{(I-H)}E(\boldsymbol{y}) + trace(\boldsymbol{(I-H)Var(y)}) \\
+&= \boldsymbol{(X\beta)^{\top}(I-H)(X\beta)} + trace(\boldsymbol{(I-H)}\sigma^2\boldsymbol{I}) \\
+&= (2n - 3) \sigma^2
+\end{align}$$
+
+so, we can let $\frac{\boldsymbol{\hat{\varepsilon}^{\top}\hat{\varepsilon}}}{2n-3}$ be an unbiased estimator of $\sigma^2$. 
+
+
+## c. Write the test statistic for testing $\beta_1 = \beta_2$ against the alternative that $\beta_1 \neq \beta_2$.
+
+The hypothesis test can rewrite as
+
+$$
+\boldsymbol{C\beta = d} \quad vs. \boldsymbol{C\beta \neq d}
+$$
+where $\boldsymbol{C} = \begin{pmatrix} 0 & 1 & -1 \end{pmatrix}$ with $rank(\boldsymbol{C}) = 1$ and $\boldsymbol{d} = 0$
+
+The full model is 
+
+$$\boldsymbol{y} = \beta_0 + \boldsymbol{x_1}\beta_1 + \boldsymbol{x_2}\beta_2 + \boldsymbol{\varepsilon}$$
+
+Let the least square estimator of $\boldsymbol{beta}$ be denoted as $\boldsymbol{\hat{\beta}}$. Then we know $SSE = \boldsymbol{\hat{\varepsilon}^{\top}\hat{\varepsilon}} \sim \sigma^2\chi_{2n-3}^2$.
+
+On the other side, the reduced model (under $H_0: \beta_1 = \beta_2$) is 
+
+$$\boldsymbol{y} = \beta_0 + (\boldsymbol{x_1 + x_2})\beta_1 + \boldsymbol{\varepsilon}$$
+
+the least square estimate of $\boldsymbol{beta}$ is $\boldsymbol{\hat{\beta}_{H_0}} = \boldsymbol{\hat{\beta}  - (X^{\top}X)^{-1}C^{\top}(C(X^{\top}X)^{-1}C^{\top})^{-1}(C\hat{\beta} -d)}$ and the residual is $\boldsymbol{\hat{\varepsilon}_{H_0} = y - \hat{y}_{H_0} = y - X\hat{\beta}_{H_0}}$
+
+By some calculation, one can get 
+
+$$\begin{align}
+\Delta SSE &= SSE - SSE_{H_0} = \boldsymbol{\hat{\varepsilon}^{\top}\hat{\varepsilon} - \hat{\varepsilon}_{H_0}^{\top}\hat{\varepsilon}_{H_0}} \\
+&= \boldsymbol{(C\hat{\beta}-d)^{\top}(C(X^{\top}X)^{-1}C^{\top})^{-1}(C\hat{\beta}-d)}
+\end{align}$$
+
+and under $H_0: \boldsymbol{C\beta = d}$, $\Delta SSE \sim \sigma^2\chi_{r=1}^2$.
+
+Furthermore, $SSE$ is independent of $\Delta SSE$, so we can use the test statistic
+
+$$
+F = \frac{\Delta SSE / 1}{SSE / (2n - 3)} = \frac{\frac{\Delta SSE}{\sigma^2} / 1}{\frac{SSE}{\sigma^2} / (2n - 3)} \sim F_{1, 2n-3}
+$$
+
+We could reject $H_0$ if the test statistic $F$ value is greater then the critical value $F_{1, 2n-3}(\alpha)$, where $\alpha$ is significance level. Otherwise, we would retain $H_0$.
+
+
+# 3. Consider the two models $\boldsymbol{y_1 = X_1\beta_1 + \varepsilon_1}$ and $\boldsymbol{y_2 = X_2\beta_2 + \varepsilon_2}$ where the $\boldsymbol{X_i}$'s are $n_i × p$ matrices. Suppose that $\boldsymbol{\varepsilon_i} ∼ N(\boldsymbol{0}, \sigma_i^2\boldsymbol{I})$ where $i = 1, 2$ and that $\boldsymbol{\varepsilon_1}$ and $\boldsymbol{\varepsilon_2}$ are independent.
+
+## a. Assuming that the $σ_i'$s are known, obtain a test for the hypothesis $\boldsymbol{\beta_1 = \beta_2}$·
+
+From the least square estimation, we have
+
+$$
+\boldsymbol{\hat{\beta}_1 = (X_1^{\top}X_1)^{-1}X_1^{\top}y_1} \quad \& \quad  \boldsymbol{\hat{\beta}_2 = (X_2^{\top}X_2)^{-1}X_2^{\top}y_2} 
+$$
+
+and since $\boldsymbol{y_i} \sim N_p(X_i\beta_i, \sigma_i^2I)$ and $\boldsymbol{\beta_i}$ is a linear combination of $\boldsymbol{y_i}$ for $i = 1, 2$, 
+so
+
+$$
+\boldsymbol{\hat{\beta}_1} \sim N_p \left ( \boldsymbol{\beta_1}, \sigma_1^2\boldsymbol{(X_1^{\top}X_1)^{-1}} \right ) \quad \& \quad \boldsymbol{\hat{\beta}_2} \sim N_p \left (\boldsymbol{\beta_2}, \sigma_2^2\boldsymbol{(X_2^{\top}X_2)^{-1}} \right ) 
+$$
+
+Otherwise, $\boldsymbol{y_1}$ are mutually independent with $\boldsymbol{y_2}$, therefore $Cov(\boldsymbol{Ay_1}, \boldsymbol{By_2}) = \boldsymbol{A}Cov(\boldsymbol{y_1}, \boldsymbol{y_2})\boldsymbol{B^{\top}} = \boldsymbol{0}$ for any matrices $\boldsymbol{A}$ and $\boldsymbol{B}$. We can get
+
+$$\begin{align}
+&\boldsymbol{\hat{\beta}_1 - \hat{\beta}_2} \sim N_p \left ( \boldsymbol{(\beta_1 - \beta_2)}, (\sigma_1^2\boldsymbol{(X_1^{\top}X_1)^{-1}} + \sigma_2^2\boldsymbol{(X_2^{\top}X_2)^{-1}}) \right ) \\
+\Rightarrow \quad &\frac{\boldsymbol{(\hat{\beta}_1 - \hat{\beta}_2) - (\beta_1 - \beta_2)}}{\sqrt{\sigma_1^2\boldsymbol{(X_1^{\top}X_1)^{-1}} + \sigma_2^2\boldsymbol{(X_2^{\top}X_2)^{-1}}}} \sim N_p \left ( \boldsymbol{0}, \boldsymbol{I} \right ) \\
+\Rightarrow \quad &\frac{[\boldsymbol{(\hat{\beta}_1 - \hat{\beta}_2) - (\beta_1 - \beta_2)}]^{\top}[\boldsymbol{(\hat{\beta}_1 - \hat{\beta}_2) - (\beta_1 - \beta_2)}]}{\sigma_1^2\boldsymbol{(X_1^{\top}X_1)^{-1}} + \sigma_2^2\boldsymbol{(X_2^{\top}X_2)^{-1}}} \sim \chi_{p}^2
+\end{align}$$
+
+When the the $σ_i'$s are known, the test statistic for $\boldsymbol{\beta_1 = \beta_2}$ is $[\boldsymbol{(\hat{\beta}_1 - \hat{\beta}_2)}]^{\top}[\sigma_1^2\boldsymbol{(X_1^{\top}X_1)^{-1}} + \sigma_2^2\boldsymbol{(X_2^{\top}X_2)^{-1}}]^{-1}[\boldsymbol{(\hat{\beta}_1 - \hat{\beta}_2)}]$, which is distributed at chi-square distribution with $df = p$. We could reject the null hypothesis $H_0: \boldsymbol{\beta_1 = \beta_2}$ if the the test statistic is greater then $\chi_{p}^2(\alpha)$, where $\alpha$ is significance level. Otherwise, we would retain $H_0$.
+
+
+## b. Assume that $\sigma_1 = \sigma_2$ but they are unknown. Derive a test for the hypothesis $\beta_1 = \beta_2$.
+
+Let $\sigma = \sigma_1 = \sigma_2$ are unknown, the pooled sample variance is
+
+$$
+s_p^2 = \frac{(n_1 - 1)s_1^2 + (n_2 - 1)s_2^2}{n_1 + n_2 - 2} = \frac{\boldsymbol{\hat{\varepsilon}_1^{\top}\hat{\varepsilon}_1 + \hat{\varepsilon}_2^{\top}\hat{\varepsilon}_2}}{n_1 + n_2 - 2} = \frac{\boldsymbol{y_1^{\top}(I-H_1)y_1 + y_2^{\top}(I-H_2)y_2}}{n_1 + n_2 - 2}
+$$
+
+since $\frac{\boldsymbol{y_i^{\top}(I-H_i)y_i}}{\sigma^2} \sim \chi_{n_i-p}^2$ for $i = 1, 2$ and $y_{i1}$'s are independent of $y_{i2}$'s, one has
+
+$$\begin{align}
+&\frac{\boldsymbol{y_1^{\top}(I-H_1)y_1 + y_2^{\top}(I-H_2)y_2}}{\sigma^2} \sim \chi_{n_1 + n_2 - 2p}^2 \\
+\Rightarrow \quad &\frac{(n_1 + n_2 - 2)s_p^2}{\sigma^2} \sim \chi_{n_1 + n_2 - 2p}^2
+\end{align}$$
+
+Furthermore, 
+$$\begin{align}
+&E(\frac{(n_1 + n_2 - 2)s_p^2}{\sigma^2}) = n_1 + n_2 - 2p \\
+\Rightarrow \quad &E(s_p^2) = \frac{\sigma^2}{n_1 + n_2 - 2p}(n_1 + n_2 - 2p) = \sigma^2
+\end{align}$$
+so, the pooled sample variance is a unbiased estimator for $\sigma^2$.
+
+Combine the result form part a., the random vector
+
+$$
+\frac{\boldsymbol{(\hat{\beta}_1 - \hat{\beta}_2) - (\beta_1 - \beta_2)}}{s_p\sqrt{\boldsymbol{(X_1^{\top}X_1)^{-1}} + \boldsymbol{(X_2^{\top}X_2)^{-1}}}} = 
+\frac{\frac{\boldsymbol{(\hat{\beta}_1 - \hat{\beta}_2) - (\beta_1 - \beta_2)}}{\sqrt{\sigma^2\boldsymbol{(X_1^{\top}X_1)^{-1}} + \sigma^2\boldsymbol{(X_2^{\top}X_2)^{-1}}}}}{\sqrt{\frac{(n_1 + n_2 - 2p)s_p^2 / \sigma^2}{n_1 + n_2 - 2p}}} \sim t_{n_1 + n_2 - 2p}
+$$
+
+where $t_{n_1 + n_2 - 2p}$ is a p-variate t distribution with $df = n_1 + n_2 - 2p$. Furthermore, we sum of square the random vector in the above equation and divide it by $p$, we get
+
+$$
+\frac{[\boldsymbol{(\hat{\beta}_1 - \hat{\beta}_2) - (\beta_1 - \beta_2)}]^{\top}[\boldsymbol{(\hat{\beta}_1 - \hat{\beta}_2) - (\beta_1 - \beta_2)}]}{ps_p^2(\boldsymbol{(X_1^{\top}X_1)^{-1}} + \boldsymbol{(X_2^{\top}X_2)^{-1}})}
+= \frac{\frac{[\boldsymbol{(\hat{\beta}_1 - \hat{\beta}_2) - (\beta_1 - \beta_2)}]^{\top}[\boldsymbol{(\hat{\beta}_1 - \hat{\beta}_2) - (\beta_1 - \beta_2)}]}{\sigma^2\boldsymbol{(X_1^{\top}X_1)^{-1}} + \sigma^2\boldsymbol{(X_2^{\top}X_2)^{-1}}} / p}{\frac{(n_1 + n_2 - 2p)s_p^2 / \sigma^2}{n_1 + n_2 - 2p}}
+\sim F_{p, n_1+n_2-2p}
+$$
+
+where the numerator is distributed at $\chi_{p}^2 / p$ and the denominator is distributed at $\chi_{n_1 + n_2 - 2p}$. When $\sigma_1 = \sigma_2$ is unknown, the test statistic for $\boldsymbol{\beta_1 = \beta_2}$ is $\frac{1}{pS_p^2}[\boldsymbol{(\hat{\beta}_1 - \hat{\beta}_2)}]^{\top}[\boldsymbol{(X_1^{\top}X_1)^{-1}} + \boldsymbol{(X_2^{\top}X_2)^{-1}})]^{-1}[\boldsymbol{(\hat{\beta}_1 - \hat{\beta}_2)}]$, which is distributed at $F$ distribution with $df_1 = p$ and $df_2 = n_1 + n_2 - 2p$. In conclusion, We could reject the null hypothesis $H_0: \boldsymbol{\beta_1 = \beta_2}$ if the the test statistic is greater then $F_{p, n_1 + n_2 -2p}(\alpha)$, where $\alpha$ is significance level. Otherwise, we would retain $H_0$.
+
+
+# 4. Moore (1975) reported the results of an experiment to construct a model for total oxygen demand in dairy wastes as a function of five laboratory measurements (Data is attached in the mail). Data were collected on samples kept in suspension in water in a laboratory for 220 days. Although all observations reported here were taken on the same sample over time, assume that they are independent. The measured variables are: 
+
+- **$y$ log(oxygen demand, mg oxygen per minute)**
+- **$x_1$ biological oxygen demand, mg/liter**
+- **$x_2$ total Kjeldahl nitrogen, mg/liter**
+- **$x_3$ total solids, mg/liter**
+- **$x_4$ total volatile solids, a component of $x_3$, mg/liter**
+- **$x_5$ chemical oxygen demand, mg/liter**
+   
+## a. Fit a multiple regression model using $y$ as the dependent variable and all $x_j$’s as the independent variables.
+
+First of all, we should load the data to R
+
+```{r}
+data <- readxl::read_excel("E3.7.xlsx", col_names =TRUE)
+knitr::kable(data)
+```
+
+Our model is
+
+$$
+y_i = \beta_0 + \beta_1x_{i1} + \beta_2x_{i2} + \beta_3x_{i3} + \beta_4x_{i4} + \beta_5x_{i5} + \varepsilon_i
+$$
+
+where $\varepsilon_i$'s are mutually independent with mean 0 and variance $\sigma^2$ for all i.
+
+I use the `lm()` function to fit multiple regression model in R
+
+```{r}
+full_lm <- lm(y ~ 1 + x.1 + x.2 + x.3 + x.4 + x.5, data)
+summary(full_lm)
+```
+
+then the fitted model is 
+
+$$\begin{align}
+\hat{E}(y_i | x_{i1}, \dots, x_{i5}) = \hat{y}_i = &-2.16 - 9.01 \times 10^{-6} x_{i1} + 1.32 \times 10^{-3} x_{i2} \\ &+ 1.28 \times 10^{-4} x_{i3} + 7.90 \times 10^{-3} x_{i4} + 1.42 \times 10^{-4} x_{i5}
+\end{align}$$
+
+
+## b. Now fit a regression model with only the independent variables $x_3$ and $x_5$. How do the new parameters, the corresponding value of $R^2$ and the t-values compare with those obtained from the full model?
+
+Our reduced model now is 
+
+$$
+y_i = \beta_0 + \beta_3x_{i3} + \beta_5x_{i5} + \varepsilon_i
+$$
+
+```{r}
+reduced_lm <- lm(y ~ 1 + x.3 + x.5, data)
+summary(reduced_lm)
+```
+
+then the fitted model is 
+
+$$
+\hat{E}(y_i | x_{i3}, x_{i5}) = \hat{y}_i = -1.37 + 1.49 \times 10^{-4} x_{i3} + 1.42 \times 10^{-4} x_{i5}
+$$
+
+The coefficient of determination in the reduced model ($R^2 = 0.79$) is smaller the the full model ($R^2 = 0.81$). The t-value of $\beta_0$ is smaller in the reduced model and the t-value of $\beta_3$ & $\beta_5$ is greater in the reduced model. However, there have smaller p-value in the reduced model than in the full model, so triple of them are significance in the t test (under the significance level $\alpha = 0.05$).
+
+
+# 5. Consider the data given in 4. Suppose the model is 
+$$y_i = \beta_0 + \beta_1x_{i1} + \beta_2x_{i2} + \beta_3x_{i3} + \beta_4x_{i4} + \beta_5x_{i5} + \varepsilon_i$$
+**where $i = 1, \dots, n$ and $\boldsymbol{\varepsilon} = (\varepsilon_1, \dots , \varepsilon_n)^{\top} \sim N(0, σ^2I_n)$.**
+
+## a. Test the hypothesis $\beta_2 = \beta_4 = 0$ at the 5 per cent level of significance. 
+
+Our reduced model is 
+
+$$
+y_i = \beta_0 + \beta_1x_{i1} + \beta_3x_{i3} + \beta_5x_{i5} + \varepsilon_i
+$$
+
+```{r}
+reduced2_lm <- lm(y ~ 1 + x.1 + x.3 + x.5, data)
+summary(reduced2_lm)
+```
+
+We can use the F test to test the hypothesis
+
+```{r}
+anova(reduced2_lm, full_lm)
+```
+
+At the significance level $\alpha = 0.05$, the p-value of the F test is $0.50 > \alpha$, fail to reject $H_0: \beta_2 = \beta_4 = 0$. It shows that at least one of $\beta_2$ and $\beta_4$ is not equal to 0. From the above result, therefore, we would retain the original full model $y_i = \beta_0 + \beta_1x_{i1} + \beta_2x_{i2} + \beta_3x_{i3} + \beta_4x_{i4} + \beta_5x_{i5} + \varepsilon_i$.
+
+
+## b. Find a 95 per cent C.I. for $\beta_1$. 
+## c. Find a 95 per cent C.I. for $\beta_3 + 2\beta_5$.
+
+I calculate both of $95\%$ C.I for $\beta_1$ and $\beta_3 + 2\beta_5$ at the same time. The R code is as follows
+
+```{r}
+library(multcomp)
+contrast <-  rbind("β1" = c(0, 1, 0, 0, 0, 0), 
+                   "β3+2*β5" = c(0, 0, 0, 1, 0, 2))
+full_glht <- glht(full_lm, linfct = contrast)
+summary(full_glht)
+full_confint <- confint(full_glht, 
+                        level = 0.95, 
+                        calpha = univariate_calpha()) # specify univariate confidence intervals 
+full_confint
+plot(full_confint)
+```
+
+In part b., the estimate of $\beta_0$ is $-9.01 \times 10^{-6}$ and the $95\%$ C.I. is $[-1.12 \times 10^{-3}, 1.10 \times 10^{-3}]$. Otherwise, the $95\%$ C.I contains 0, so we fail to reject the null hypothesis of $\beta_0 = 0$.
+
+In part c., the estimate of $\beta_3 + 2\beta_5$ is $4.11 \times 10^{-4}$ and the $95\%$ C.I. is $[5.90 \times 10^{-5}, 7.63 \times 10^{-4}]$. On the contrary, this $95\%$ C.I does not contained 0, so we can reject the null hypothesis of $\beta_3 + 2\beta_5 = 0$.
+
+*Note: In part b. and c., the significance level of per contrast is $0.05$. But we test both of tests simultaneously, actually, we should consider the family-wise significance level ($\alpha_{FW} = 0.05$) then refine the significance level of per contrast ($\alpha_{PC} < 0.05$) in each test.*
+
+
+
+
+
+
+
+

@@ -1,0 +1,76 @@
+body {
+  font-family: "Segoe UI", "Microsoft JhengHei";
+  font-size: 12pt;
+}
+
+
+h1 {
+  font-size: 12pt;
+  font-weight: bold;
+}
+
+h1.title{
+  font-size: 16pt;
+  text-align: center;
+}
+
+h2 {
+  font-size: 12pt;
+  font-weight: bold;
+}
+
+h3 {
+  font-size: 12pt;
+  font-weight: bold;
+}
+
+h4 {
+  font-size: 12pt;
+  font-weight: bold;
+}
+
+h4.author {
+  font-size: 14pt;
+  text-align: right;
+}
+
+h4.date {
+  font-size: 14pt;
+  text-align: right;
+}
+
+h5 {
+  font-size: 12pt;
+  font-weight: bold;
+}
+
+h6 {
+  font-size: 12pt;
+  font-weight: bold;
+}
+
+pre, code, tt {
+  font-size: 12pt;
+  font-family: "Fira Code";
+}
+
+.indent{
+  text-indent: 2em;
+}
+
+.MathJax {
+  font-size: 12pt;
+}
+
+.caption{
+  font-weight: bold;
+  color: grey;
+}
+
+div.level2 {
+  margin-left: 2em;
+}
+
+div.level3 {
+  margin-left: 4em;
+}

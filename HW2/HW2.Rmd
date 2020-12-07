@@ -1,0 +1,356 @@
+---
+title: "Regression analysis_Homework Assignment 2"
+author: "心理所碩二 R08227112 林子堯"
+date: "2020/10/05"
+output: 
+  html_document:
+    css: style.css
+editor_options: 
+  chunk_output_type: inline
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	message = FALSE, 	warning = FALSE, comment = "",
+	fig.width = 5, fig.asp = 0.68, fig.align = "center",
+	eval = TRUE
+)
+```
+
+Sen, A., & Srivastava, M. (1990). Regression analysis: theory, methods, and applications.
+
+# 1. (\#S.2.2) Suppose $\boldsymbol{y = X\beta + \epsilon}$, where $E(\boldsymbol{\varepsilon}) = 0$, $Cov(\boldsymbol{\varepsilon}) = σ^2\boldsymbol{I_n}$ the matrix $\boldsymbol{X}$ of dimension $n \times k$ has rank $k ≤ n$, and $\boldsymbol{\beta}$ is a $k$-vector of regression parameters. Suppose, further, that we wish to predict the (n + 1)st observation $y_{n+1}$ at $\boldsymbol{x_{n+1}^{\top}} = (x_{n+1,1}, \dots, x_{n+1,k})$; ie., $y_{n+1} = \boldsymbol{x_{n+1}^{\top} \beta} + \varepsilon_{n+1}$ where $\varepsilon_{n+1}$ has the same distribution as the other $\varepsilon_i$'s and is independent of them. The predictor based on the least squares estimate of $\boldsymbol{\beta}$ is given by $\hat{y}_{n+1} = \boldsymbol{x_{n+1}^{\top} \hat{\beta}}$, where $\boldsymbol{\hat{\beta} = (X^{\top}X)^{−1}X^{\top}y}$.
+
+## a. Show that $\hat{y}_{n+1}$ is a linear function of $y_1, \dots, y_n$ such that $E(\hat{y}_{n+1} − y_{n+1}) = 0$.
+
+The least square estimator of $\boldsymbol{\beta}$ is $\boldsymbol{\hat{\beta} = (X^{\top}X)^{-1}X^{\top}y}$. One can get that
+
+$$\begin{align}
+\hat{y}_{n+1} &= \boldsymbol{x_{n+1}^{\top}\hat{\beta}} \\
+&= \boldsymbol{x_{n+1}^{\top}(X^{\top}X)^{−1}X^{\top}y} 
+\end{align}$$
+
+where $\boldsymbol{x_{n+1}^{\top}(X^{\top}X)^{−1}X^{\top}}$ is a $1 \times n$ vector, therefore $\hat{y}_{n+1}$ is a linear combination of $\{y_1, \dots, y_{n+1}\}$. And the expectation of $\hat{y}_{n+1} - y_{n+1}$ is
+
+$$\begin{align}
+E(\hat{y}_{n+1} - y_{n+1}) &= E(\hat{y}_{n+1}) - E(y_{n+1}) \\
+&= E(\boldsymbol{x_{n+1}^{\top}(X^{\top}X)^{−1}X^{\top}y}) - E(\boldsymbol{x_{n+1}^{\top} \beta + \varepsilon}) \\ 
+&= \boldsymbol{x_{n+1}^{\top}(X^{\top}X)^{−1}X^{\top}}E(\boldsymbol{y}) - \boldsymbol{x_{n+1}^{\top} \beta} \\
+&= \boldsymbol{x_{n+1}^{\top}(X^{\top}X)^{−1}X^{\top}X \beta} - \boldsymbol{x_{n+1}^{\top} \beta} \\
+&= \boldsymbol{x_{n+1}^{\top} \beta - x_{n+1}^{\top} \beta} = 0
+\end{align}$$
+
+So, $\hat{y}_{n+1}$ is an unbiased estimator of $y_{n+1}$.
+
+## b. Suppose $\tilde{y}_{n+1} = \boldsymbol{a^{\top}y}$ is another predictor of $y_{n+1}$ such that $E(\tilde{y}_{n+1} − y_{n+1}) = 0$. Show that $\boldsymbol{a}$ must satisfy $\boldsymbol{a^{\top}X = x_{n+1}^{\top}}$.
+
+Since $\tilde{y}_{n+1}$ should satisfy
+
+$$\begin{align}
+0 &= E(\tilde{y}_{n+1} − y_{n+1}) \\
+&= E(\boldsymbol{a^{\top}y}) - E(y_{n+1}) \\
+&= \boldsymbol{a^{\top}X\beta - x_{n+1}^{\top}\beta} \\
+&= \boldsymbol{(a^{\top}X - x_{n+1}^{\top})\beta} 
+\end{align}$$
+
+and $\boldsymbol{\beta}$ is not a zero vector. Therefore, $\tilde{y}_{n+1}$ is an unbiased estimator if it satisfies $\boldsymbol{a^{\top}X - x_{n+1}^{\top}} = 0$
+
+## c. Find $Var(\hat{y}_{n+1})$ and $Var(\tilde{y}_{n+1})$.
+
+$$\begin{align}
+Var(\hat{y}_{n+1}) &= Var(\boldsymbol{x_{n+1}^{\top}(X^{\top}X)^{−1}X^{\top}y}) \\
+&= \boldsymbol{(x_{n+1}^{\top}(X^{\top}X)^{−1}X^{\top})}Cov(\boldsymbol{y})\boldsymbol{(x_{n+1}^{\top}(X^{\top}X)^{−1}X^{\top})^\top} \\
+&= \boldsymbol{(x_{n+1}^{\top}(X^{\top}X)^{−1}X^{\top})}(\sigma^2\boldsymbol{I})\boldsymbol{(x_{n+1}^{\top}(X^{\top}X)^{−1}X^{\top})^\top} \\
+&= \sigma^2 \boldsymbol{x_{n+1}^{\top}(X^{\top}X)^{−1}x_{n+1}}
+\end{align}$$
+
+and
+
+$$\begin{align}
+Var(\tilde{y}_{n+1}) &= Var(\boldsymbol{a^{\top}y}) \\
+&= \sigma^2 \boldsymbol{a^{\top}a} \\
+\end{align}$$
+
+## d. Show that $Var(\hat{y}_{n+1}) \leq Var(\tilde{y}_{n+1})$
+
+If we compare the variance of $\tilde{y}$ and $\hat{y}$
+
+$$\begin{align}
+Var(\tilde{y}_{n+1}) - Var(\hat{y}_{n+1}) &= \sigma^2\boldsymbol{a^{\top}a} - \sigma^2\boldsymbol{x_{n+1}^{\top}(X^{\top}X)^{−1}x_{n+1}} \\
+&= \sigma^2\boldsymbol{(a^{\top}a - a^{\top}X(X^{\top}X)^{−1}(a^{\top}X)^{\top})} \qquad \text{(by part b: } \boldsymbol{a^{\top}X = x_{n+1}^{\top}}) \\
+&= \sigma^2\boldsymbol{(a^{\top}(I-X(X^{\top}X)^{−1}X^{\top})a)} \\
+&:= \sigma^2\boldsymbol{(a^{\top}(I-H)a)}
+\end{align}$$
+
+where $\boldsymbol{H = X(X^{\top}X)^{−1}X^{\top}}$. We know $\boldsymbol{(I-H)}$ is idempotent ($\boldsymbol{(I-H)^2 = (I-H)}$) and positive semi-definite ($\boldsymbol{b^{\top}(I-H)b} \geq 0 \text{ for all } \boldsymbol{b} \in \mathbb{R}^n$). Therefore,
+
+$$\begin{align}
+&Var(\tilde{y}_{n+1}) - Var(\hat{y}_{n+1}) \geq 0 \\
+\Rightarrow \quad & Var(\hat{y}_{n+1}) \leq Var(\tilde{y}_{n+1})
+\end{align}$$
+
+We can conclude that $\hat{y}_{n+1}$ is the best linear unbiased estimator (BLUE) for $y_{n+1}$, since its variance is smaller than any other linear unbiased estimator (e.g. $\tilde{y}$).
+
+# 2. (S.2.3) Let $y_i = \boldsymbol{x_i^{\top}\beta} + \varepsilon_i$ with $i, \dots, n$ be a regression model where $E(\varepsilon_i) = 0$, $Var(\varepsilon_i) = \sigma^2$ and $Cov(\varepsilon_i, \varepsilon_j) = 0$ when $i \neq j$. Suppose $e_i = y_i − \hat{y}_i$, where $\hat{y}_i = \boldsymbol{x_i^{\top}\hat{\beta}}$ and $\boldsymbol{\hat{\beta}}$ is the least squares estimator of $\boldsymbol{\beta}$. Let $\boldsymbol{X^{\top} = (x_1, \dots, x_n)}$. Show that the variance of $e_i$ is $\boldsymbol{[1-x_i^{\top}(X^{\top}X)^{-1}x_i]}\sigma^2$.
+
+The least square estimator of $\boldsymbol{\beta}$ is $\boldsymbol{\hat{\beta} = (X^{\top}X)^{-1}X^{\top}y}$, then
+
+$$\begin{align}
+Var(e_i) &= Var(y_i - \hat{y}_i) = Var(y_i - \boldsymbol{x_i^{\top}\hat{\beta}}) \\
+&= Var(y_i - \boldsymbol{x_i^{\top}(X^{\top}X)^{-1}X^{\top}y}) \\
+&= Var(y_i) + Var(\boldsymbol{x_i^{\top}(X^{\top}X)^{-1}X^{\top}y}) - 2Cov(y_i, \boldsymbol{x_i^{\top}(X^{\top}X)^{-1}X^{\top}y}) \\
+&= Var(y_i) + Var(\boldsymbol{x_i^{\top}(X^{\top}X)^{-1}X^{\top}y}) - 2Var(\boldsymbol{x_i^{\top}(X^{\top}X)^{-1}X^{\top}}y_i) &\text{(since }y_i \perp y_j \; \forall i \neq j) \\
+&= \sigma^2 - (\boldsymbol{x_i^{\top}(X^{\top}X)^{-1}X^{\top}})\sigma^2\boldsymbol{I}(\boldsymbol{x_i^{\top}(X^{\top}X)^{-1}X^{\top}})^{\top} \\
+&= \sigma^2[1-\boldsymbol{x_i^{\top}(X^{\top}X)^{-1}x_i}]
+\end{align}$$
+
+# 3. (S.2.4) In the model of Exercise 2.3, show that the $\hat{y}_i$ is a linear unbiased estimator of $\boldsymbol{x_i^{\top}\beta}$ (that is, $\hat{y}_i$ is a linear function of $y_1, \dots, y_n$ and $E(\hat{y}_i) = \boldsymbol{x_i^{\top}\beta}$). What is the variance of $\hat{y}_i$? Does there exist any other linear unbiased estimator of $\boldsymbol{x_i^{\top}\beta}$ with a smaller variance than the estimator $\hat{y}_i$?
+
+<span>(1)</span> One can observe that
+
+$$\begin{align}
+\hat{y_i} &= \boldsymbol{x_i^{\top}\hat{\beta}} \\
+&= \boldsymbol{x_i^{\top}(X^{\top}X)^{-1}X^{\top}y} \\
+&= \sum_{j=1}^n w_jy_j
+\end{align}$$
+
+where $(w_1, \dots, w_n) = \boldsymbol{x_i^{\top}(X^{\top}X)^{-1}X^{\top}}$. So, $\hat{y_i}$ is a linear function of $\{y_1, \dots, y_n\}$. Furthermore, its expectation is
+
+$$\begin{align}
+E(\hat{y_i}) &= \boldsymbol{x_i^{\top}(X^{\top}X)^{-1}X^{\top}E(y)} \\
+&= \boldsymbol{x_i^{\top}(X^{\top}X)^{-1}X^{\top}X\beta}\\
+&= \boldsymbol{x_i^{\top}\beta}
+\end{align}$$
+
+Therefore, $\hat{y}_i$ is a linear unbiased estimator of $\boldsymbol{x_i^{\top}\beta}$.
+
+<span>(2)</span> The variance of $\hat{y}_i$ is
+
+$$\begin{align}
+Var(\hat{y_i}) &= \boldsymbol{x_i^{\top}(X^{\top}X)^{-1}X^{\top}}Cov(\boldsymbol{y})\boldsymbol{(x_i^{\top}(X^{\top}X)^{-1}X^{\top})^{\top}} \\
+&= \sigma^2\boldsymbol{x_i^{\top}(X^{\top}X)^{-1}x_i}
+\end{align}$$
+
+<span>(3)</span> Suppose $\tilde{y}_i = \boldsymbol{a^{\top}y}$, is an linear unbiased estimator for $\boldsymbol{x_i^{\top}\beta}$, must satisfy
+
+$$\begin{align}
+&\boldsymbol{x_i^{\top}\beta} = E(\tilde{y}_i) = E(\boldsymbol{a^{\top}y}) = \boldsymbol{a^{\top}X\beta} \\ 
+\Rightarrow \quad &\boldsymbol{x_i^{\top}} = \boldsymbol{a^{\top}X}
+\end{align}$$
+
+where $\boldsymbol{\beta}$ is not a zeor vector. If we compare variance of $\tilde{y}_i$ and $\hat{y}_i$
+
+$$\begin{align}
+Var(\tilde{y}_i) - Var(\hat{y}_i) &= \sigma^2\boldsymbol{a^{\top}a} - \sigma^2\boldsymbol{x_i^{\top}(X^{\top}X)^{-1}x_i} \\
+&= \sigma^2\boldsymbol{a^{\top}(I-H)a}
+\end{align}$$
+
+where $\boldsymbol{H = X(X^{\top}X)^{−1}X^{\top}}$. We know $\boldsymbol{(I-H)}$ is idempotent ($\boldsymbol{(I-H)^2 = (I-H)}$) and positive semi-definite ($\boldsymbol{b^{\top}(I-H)b} \geq 0 \text{ for all } \boldsymbol{b} \in \mathbb{R}^n$). Therefore,
+
+$$\begin{align}
+&Var(\tilde{y}_i) - Var(\hat{y}_i) \geq 0 \\
+\Rightarrow \quad & Var(\hat{y}_i) \leq Var(\tilde{y}_i)
+\end{align}$$
+
+We can conclude that $\hat{y}_i$ is the best linear unbiased estimator (BLUE) for $\boldsymbol{x_i^{\top}\beta}$, since its variance is smaller than any other linear unbiased estimator (e.g. $\tilde{y}_i$).
+
+# 4. (S.2.6) Consider the models $\boldsymbol{y = X\beta + \varepsilon}$ and $\boldsymbol{y^* = X^*\beta + \varepsilon^*}$ where $E(\boldsymbol{\varepsilon}) = 0$, $Cov(\boldsymbol{\varepsilon}) = \sigma^2\boldsymbol{I}$, $\boldsymbol{y^* = \Gamma y}$, $\boldsymbol{X^* = \Gamma X}$, $\boldsymbol{\varepsilon^* = \Gamma \varepsilon}$ and $\boldsymbol{\Gamma}$ is a known $n \times n$ orthogonal matrix. Show that:
+
+## a. $E(\boldsymbol{\varepsilon^*}) = 0$, $Cov(\boldsymbol{\varepsilon^*}) = \sigma^2\boldsymbol{I}$
+
+If a square matrix $\boldsymbol{\Gamma}$ is said to be an orthogonal, if its columns and rows are orthogonal unit vectors or can express by $\boldsymbol{\Gamma^{\top}\Gamma = \Gamma\Gamma^{\top} = I}$.
+
+The expectation of $\boldsymbol{\varepsilon^*}$ is
+
+$$\begin{align}
+E(\boldsymbol{\varepsilon^*}) &= E(\boldsymbol{\Gamma\varepsilon}) \\
+&= \boldsymbol{\Gamma E(\varepsilon)} \\
+&= \boldsymbol{\Gamma 0 = 0}
+\end{align}$$
+
+and the covariance is
+
+$$\begin{align}
+Cov(\boldsymbol{\varepsilon^*}) &= Cov(\boldsymbol{\Gamma\varepsilon}) \\
+&= \boldsymbol{\Gamma Cov(\varepsilon) \Gamma^{\top}} \\
+&= \sigma^2 \boldsymbol{\Gamma\Gamma^{\top}} \\
+&= \sigma^2 \boldsymbol{I} \quad \text{(since } \Gamma \text{  is an orthogonal matrix)}
+\end{align}$$
+
+## b. $\boldsymbol{\hat{\beta} = \hat{\beta}^*}$ and ${s^∗}^2 = s^2$, where $\boldsymbol{\hat{\beta}}$ and $\boldsymbol{\hat{\beta^*}}$ are the least squares estimates of $\boldsymbol{\beta}$ and $s^2$ and ${s^∗}^2$ are the estimates of $\sigma^2$ obtained from the two models.
+
+From the classical simple linear regression, we know $\boldsymbol{\hat{\beta} = (X^{\top}X)^{-1}X^{\top}y}$ and $s^2 = \frac{\boldsymbol{\varepsilon^{\top}\varepsilon}}{n-p}$.
+
+Then, minimizing the sum of square errors, the least squares estimator $\boldsymbol{\hat{\beta^*}}$:
+
+$$\begin{align}
+\boldsymbol{\hat{\beta}^*} &= \boldsymbol{({X^*}^{\top}X^*)^{-1}{X^*}^{\top}y^*} \\
+&= \boldsymbol{((\Gamma X)^{\top}\Gamma X)^{-1}(\Gamma X)^{\top}\Gamma y} \\
+&= \boldsymbol{(X^{\top}\Gamma^{\top}\Gamma X)^{-1}X^{\top}\Gamma^{\top}\Gamma y} \\
+&= \boldsymbol{(X^{\top}X)^{-1}X^{\top}y}
+\end{align}$$
+
+is identical to the $\boldsymbol{\hat{\beta}}$. Likewise, the least squares estimator ${s^2}^*$:
+
+$$\begin{align}
+{s^2}^* &= \frac{\boldsymbol{(\varepsilon^*)^{\top}\varepsilon^*}}{n-p} \\
+&= \frac{\boldsymbol{(\Gamma\varepsilon)^{\top}\Gamma\varepsilon}}{n-p} \\
+&= \frac{\boldsymbol{\varepsilon^{\top}\Gamma^{\top}\Gamma\varepsilon}}{n-p} \\
+&= \frac{\boldsymbol{\varepsilon^{\top}\varepsilon}}{n-p}  
+\end{align}$$
+
+is identical to the $s^2$.
+
+# 5. (S.2.19) (the csv file of Exhibit 2.9 is attached in the mail) Exhibit 2.9 gives information on capital, labor and value added for each of three economic sectors: Food and kindred products (20), electrical and electronic machinery, equipment and supplies (36) and transportation equipment (37). The data were supplied by Dr. Philip Israelovich of the Federal Reserve Bank, who also suggested the exercise. For each sector:
+
+```{r}
+library(tidyverse)
+data <- read_csv("exhibit_2.9.csv") %>% 
+  select(-X1)
+data
+```
+
+## a. Consider the model
+
+$$V_t = \alpha K_t^{\beta_1} L_t^{\beta_2} \eta_t$$ **where the subscript** $t$ indicates year, $V_t$ is value added, $K_t$ is capital, $L_t$ is labor and $\eta_t$ is an error term, with $E[log(\eta_t)] = 0$ and $Var[log(\eta_t)]$ a constant. Assuming that the errors are independent, and taking logs of both sides of the above model, estimate $\beta_1$ and $\beta_2$.
+
+If we take logs of both sides of the above equation, we have
+
+$$
+log(V_t) = log(\alpha) + \beta_1 log(K_t) + \beta_2 log(L_t) + log(\eta_t)
+$$
+
+is identical to the classic linear regression model, where $log(K_t)$, $log(L_t)$ are new covariates, $log(V_t)$ is new response variable and $log(\eta_t)$ is random error with $E[log(\eta_t)] = 0$ and $Var[log(\eta_t)] = constant$.  
+
+For the convenience, I take log of each variables (except YEAR) at first.
+
+```{r}
+logdata <- data %>% 
+   mutate(across(contains("."), log))
+logdata
+```
+
+Then we apply `lm()` function in R on each economic sector to get $\beta_1$ and $\beta_2$. The result is as follows
+
+```{r}
+lm.20 <- lm(Val.20 ~ 1 + Cap.20 + Lab.20, logdata)
+lm.36 <- lm(Val.36 ~ 1 + Cap.36 + Lab.36, logdata)
+lm.37 <- lm(Val.37 ~ 1 + Cap.37 + Lab.37, logdata)
+lm.list <- list(lm.20, lm.36, lm.37)
+```
+
+```{r}
+getCoefficient <- function(lm.list, coefNames){
+  .coef <- lapply(lm.list, coefficients)
+  coef <- do.call(rbind, .coef) 
+  colnames(coef) <- coefNames
+  coef <- as.tibble(coef) %>% 
+  mutate(sector = c("(20)", "(36)", "(37)"), 
+         .before = `log(alpha)`)
+}
+coef <- getCoefficient(lm.list, coefNames = c("log(alpha)", "beta1", "beta2"))
+coef %>% mutate(alpha = exp(`log(alpha)`), .before = `log(alpha)`)
+```
+
+Then we get the estimated model for three sectors:
+
+-   For the sector 20: $V_t = 1.18 \times 10^{11} K_t^{0.23} L_t^{-1.46} \eta_t$.
+-   For the sector 36: $V_t = 0.29 K_t^{0.53} L_t^{0.25} \eta_t$.
+-   For the sector 37: $V_t = 6.60 \times 10^{-5} K_t^{0.51} L_t^{0.85} \eta_t$.
+
+## b. The model given in (a) above is said to be of the Cobb-Douglas form. It is easier to interpret if $\beta_1 + \beta_2 = 1$. Estimate $\beta_1$ and $\beta_2$ under this constraint.
+
+Since the constraint $\beta_1 + \beta_2 = 1$, we can reparamterize the model in (a) and get
+
+$$\begin{align}
+&log(V_t) = log(\alpha) + \beta_1 log(K_t) + \beta_2 log(L_t) + log(\eta_t) \\
+\Rightarrow \quad &log(V_t) = log(\alpha) + \beta_1 log(K_t) + (1 - \beta_1) log(L_t) + log(\eta_t) \\
+\Rightarrow \quad &(log(V_t) - log(L_t)) = log(\alpha) + \beta_1 (log(K_t) - log(L_t)) + log(\eta_t) \\
+\end{align}$$
+
+Then we use `lm()` function to fit this model
+
+```{r}
+lm.cnstr.20 <- lm(I(Val.20 - Lab.20) ~ 1 + I(Cap.20 - Lab.20), logdata)
+lm.cnstr.36 <- lm(I(Val.36 - Lab.36) ~ 1 + I(Cap.36 - Lab.36), logdata)
+lm.cnstr.37 <- lm(I(Val.37 - Lab.37) ~ 1 + I(Cap.37 - Lab.37), logdata)
+lm.cnstr.list <- list(lm.cnstr.20, lm.cnstr.36, lm.cnstr.37)
+```
+
+```{r}
+coef.cnstr <- getCoefficient(lm.cnstr.list, coefNames = c("log(alpha)", "beta1"))
+coef.cnstr %>% 
+  mutate(alpha = exp(`log(alpha)`), .before = `log(alpha)`) %>% 
+  mutate(beta2 = 1 - beta1)
+```
+
+From about result, we get the estimated model for three sectors:
+
+-   For the sector 20: $V_t = 0.03 K_t^{1.29} L_t^{-0.29} \eta_t$.
+-   For the sector 36: $V_t = 0.02 K_t^{0.90} L_t^{0.10} \eta_t$.
+-   For the sector 37: $V_t = 0.01 K_t^{0.01} L_t^{0.99} \eta_t$.
+
+## c. Sometimes the model
+
+$$V_t = \alpha \gamma^t K_t^{\beta_1} L_t^{\beta_2} \eta_t$$ **is considered where** $\gamma_t$ is assumed to account for technological development. Estimate $\beta_1$ and $\beta_2$ for this model.
+
+Again, we take logs of both sides of the above equation, we have
+
+$$
+log(V_t) = log(\alpha) + log(\gamma) t + \beta_1 log(K_t) + \beta_2 log(L_t) + log(\eta_t)
+$$
+
+where $t$(YEAR), $log(K_t)$ and $log(L_t)$ are new covariates, $log(V_t)$ is new response variable, $log(\eta_t)$ is random error and add a new coefficient $log(\gamma)$ corresponding to the covariate $t$(YEAR). Then we use `lm()` function to fit this model
+
+```{r}
+lm2.20 <- lm(Val.20 ~ 1 + YEAR + Cap.20 + Lab.20, logdata)
+lm2.36 <- lm(Val.36 ~ 1 + YEAR + Cap.36 + Lab.36, logdata)
+lm2.37 <- lm(Val.37 ~ 1 + YEAR + Cap.37 + Lab.37, logdata)
+lm2.list <- list(lm2.20, lm2.36, lm2.37)
+```
+
+```{r}
+coef2 <- getCoefficient(lm2.list, coefNames = c("log(alpha)", "log(eta)", "beta1", "beta2"))
+coef2 %>% 
+  mutate(alpha = exp(`log(alpha)`), .before = `log(alpha)`) %>% 
+  mutate(eta = exp(`log(eta)`), .before = `log(eta)`)
+```
+
+From about result, we get the estimated model for three sectors:
+
+-   For the sector 20: $V_t = 3.10 \times 10^8 (1.01)^t K_t^{0.04} L_t^{-0.91} \eta_t$.
+-   For the sector 36: $V_t = 2.02 \times 10^{-7} (1.02)^t K_t^{0.82} L_t^{0.88} \eta_t$.
+-   For the sector 37: $V_t = 4.42 \times 10^{-5} (1.00)^t K_t^{0.16} L_t^{1.20} \eta_t$.
+
+## d. Estimate $\beta_1$ and $\beta_2$ in the model in (c) , under the constraint $\beta_1 + \beta_2 = 1$.
+
+Since the constraint $\beta_1 + \beta_2 = 1$, similarly to the procedure in (b), reparamterizing the model in (c) can get
+
+$$\begin{align}
+&log(V_t) = log(\alpha) + log(\gamma) t + \beta_1 log(K_t) + \beta_2 log(L_t) + log(\eta_t) \\
+\Rightarrow \quad &log(V_t) = log(\alpha) + log(\gamma) t + \beta_1 log(K_t) + (1 - \beta_1) log(L_t) + log(\eta_t) \\
+\Rightarrow \quad &(log(V_t) - log(L_t)) = log(\alpha) + log(\gamma) t + \beta_1 (log(K_t) - log(L_t)) + log(\eta_t) \\
+\end{align}$$
+
+Then we use `lm()` function to fit this model
+
+```{r}
+lm2.cnstr.20 <- lm(I(Val.20 - Lab.20) ~ 1 + YEAR + I(Cap.20 - Lab.20), logdata)
+lm2.cnstr.36 <- lm(I(Val.36 - Lab.36) ~ 1 + YEAR + I(Cap.36 - Lab.36), logdata)
+lm2.cnstr.37 <- lm(I(Val.37 - Lab.37) ~ 1 + YEAR + I(Cap.37 - Lab.37), logdata)
+lm2.cnstr.list <- list(lm2.cnstr.20, lm2.cnstr.36, lm2.cnstr.37)
+```
+
+```{r}
+coef2.cnstr <- getCoefficient(lm2.cnstr.list, coefNames = c("log(alpha)", "log(eta)", "beta1"))
+coef2.cnstr %>% 
+  mutate(alpha = exp(`log(alpha)`), .before = `log(alpha)`) %>% 
+  mutate(eta = exp(`log(eta)`), .before = `log(eta)`) %>% 
+  mutate(beta2 = 1 - beta1)
+```
+
+From about result, we get the estimated model for three sectors:
+
+-   For the sector 20: $V_t = 9.24 \times 10^{-5} (1.06)^t K_t^{-0.49} L_t^{1.49} \eta_t$.
+-   For the sector 36: $V_t = 2.31 \times 10^{-3} (1.02)^t K_t^{0.03} L_t^{0.97} \eta_t$.
+-   For the sector 37: $V_t = 6.41 \times 10^{-3} (1.00)^t K_t^{-0.32} L_t^{1.32} \eta_t$.

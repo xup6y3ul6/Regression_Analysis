@@ -1,0 +1,198 @@
+---
+title: "Regression analysis_Homework Assignment 5"
+author: "心理所碩二 R08227112 林子堯"
+date: "2020/11/30"
+output: 
+  html_document:
+    css: style.css
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	message = FALSE, 	warning = FALSE, comment = "",
+	fig.align = "center",
+	eval = TRUE
+)
+```
+
+
+\newcommand{\f}{f_Y(y;\theta)}
+\newcommand{\ll}{\ln \f}
+\newcommand{\pder}[2]{\frac{\partial^{#2}}{\partial{#1}^{#2}}}
+\newcommand{\pderfrac}[3]{\frac{\partial^{#3}{#1}}{\partial{#2}^{#3}}}
+
+# 1. Let $\f$ be the distribution of random variable Y under parameter $\theta$ and $l = \ll$ be the log-likelihood.
+## a. Show $E_\theta\left[\pderfrac{l}{\theta}{2}\right] + E_\theta\left[(\pderfrac{l}{\theta}{2})^2\right] = 0$
+
+First of all, $\int \f d\theta =1$. Under the regularity conditions, than the 1st derivative is
+
+$$
+\begin{align}
+0 &= \pder{\theta}{} \int \f dy \\
+&= \int \pder{\theta}{} \f dy \\
+&= \int \frac{\pder{\theta}{} \f}{\f} \f dy \\
+&= \int \left\{ \pder{\theta}{} \ll \right\} \f dy \\
+&= E\left[\pder{\theta}{} \ll\right]
+\end{align}
+$$
+So $E\left[\pderfrac{l}{\theta}{}\right] = 0$.
+
+The 2nd derivative is
+
+$$
+\begin{align}
+0 &= \pder{\theta}{2} \int \f dy \\
+&= \int \pder{\theta}{} \left\{ \pder{\theta}{} \ll \f \right\} dy \\
+&= \int \left\{ \pder{\theta}{2} \ll \f \right\} + \left\{ (\pder{\theta}{} \ll)^2 \f \right\} dy \\
+&= E\left[\pder{\theta}{2} \ll\right] + E\left[(\pder{\theta}{} \ll)^2\right]
+\end{align}
+$$
+
+Since $E\left[\pderfrac{l}{\theta}{}\right] = 0$, $E\left[(\pder{\theta}{} \ll - E\left[\pder{\theta}{} \ll\right])^2\right] = Var\left[\pder{\theta}{} \ll\right]$. Therefore, one has 
+
+$$
+\begin{align}
+0 &= E\left[\pderfrac{l}{\theta}{2}\right] + E\left[(\pderfrac{l}{\theta}{})^2\right] \\
+&= E\left[\pderfrac{l}{\theta}{2}\right] + Var\left[\pderfrac{l}{\theta}{}\right]
+\end{align}
+$$
+
+## b. Show $E_\theta\left[\frac{\partial^3 l}{\partial \theta^3}\right] + 3Cov_\theta\left[\frac{\partial^3 l}{\partial \theta^3}, \frac{\partial l}{\partial \theta}\right] + E_\theta\left[(\frac{\partial l}{\partial \theta})^3\right] = 0$ 
+
+The 3rd derivative is
+
+$$
+\begin{align}
+0 &= \pder{\theta}{3} \int \f dy \\
+&= \int \pder{\theta}{} \left\{ \pder{\theta}{2} \ll \f + (\pder{\theta}{} \ll)^2 \f \right\} dy \\
+&= \int \left\{ \pder{\theta}{3} \ll \f + \pder{\theta}{2} \ll \pder{\theta}{} \ll \f \right\} + \\&\qquad
+\left\{ 2 \pder{\theta}{2} \ll \pder{\theta}{} \ll \f +  (\pder{\theta}{} \ll)^2 \pder{\theta}{} \ll \f \right\} dy \\
+&= E\left[\pder{\theta}{3} \ll\right] + 3E\left[(\pder{\theta}{2}\ll)(\pder{\theta}{}\ll)\right] + E\left[(\pder{\theta}{}\ll)^3\right]
+\end{align}
+$$
+
+Again, since $E\left[\pderfrac{l}{\theta}{}\right] = 0$, 
+
+$$
+\begin{align}
+&E\left[(\pder{\theta}{2}\ll)(\pder{\theta}{}\ll)\right] \\
+= &E\left[(\pder{\theta}{2}\ll)(\pder{\theta}{}\ll)\right] - E\left[\pder{\theta}{2}\ll\right] E\left[\pder{\theta}{}\ll\right] \\
+= &Cov\left[\pder{\theta}{2}\ll, \pder{\theta}{}\ll\right]
+\end{align}
+$$ 
+
+Therefore, one has
+
+$$
+\begin{align}
+0 &= E\left[\pder{\theta}{3} \ll\right] + 3Cov\left[\pder{\theta}{2}\ll, \pder{\theta}{}\ll\right] + E\left[(\pder{\theta}{}\ll)^3\right] \\
+&= E\left[\pderfrac{l}{\theta}{3}\right] + 3Cov\left[\pderfrac{l}{\theta}{2}, \pderfrac{l}{\theta}{}\right] + E\left[(\pderfrac{l}{\theta}{})^3\right]
+\end{align}
+$$
+
+
+# 2. Check whether Weibull, negative binomial, gamma distribution belong to the exponential family. If so, find the canonical forms.
+
+## a. Weibull distribution
+
+Let $Y \sim Weibull(\gamma, \lambda)$, where $\gamma \geq 0$ and $\lambda \geq 0$ are two **unknwon** parameters. The pdf of $Y$ is
+
+$$
+f(y | \gamma, \lambda) = \lambda \gamma y^{\gamma-1}e^{-\lambda y^\gamma} 1_{\{0, \infty\}}(y)
+$$
+we can find that a Weibull distribution with **two parameters** can't write as a canonical form. 
+
+But if $\gamma$ is **known**, one can let $Z = Y^\gamma$, the cdf of $Z$ is
+
+$$
+P(Z \leq z) = P(Y^\gamma \leq z) = P(Y \leq z^{1/\gamma}) = \int_0^{z^{1/\gamma}} f(y|\gamma, \lambda) dy
+$$
+
+and pdf of $Z$ is
+
+$$
+\begin{align}
+f(z | \lambda) &= \frac{d}{dz} P(Z \leq z) \\
+&= \frac{1}{\gamma}z^{1/\gamma-1} \lambda \gamma (z^{1/\gamma})^{\gamma-1} e^{-\lambda(z^{1/\gamma})^{\gamma}}1_{\{0, \infty\}}(z^{1/\gamma}) \\
+&= \lambda e^{-\lambda z} 1_{\{0, \infty\}}(z)
+\end{align}
+$$
+The transformed random variable $Z$ is exactly a exponential distribution with one parameter $\lambda$. It can write as the canonical form as follow 
+
+$$
+\begin{align}
+f(z|lambda) &= exp\left\{ z(-\lambda) + \ln \lambda + \ln(1_{\{0, \infty\}}(z)) \right\} \\
+&= \exp\left\{ \frac{z\theta - b(\theta)}{a(\phi)} + c(y, \phi) \right\}
+\end{align}
+$$
+where $\theta = -\lambda$, $b({\theta}) = -\ln(-\theta)= -\ln(\lambda)$, $a(\phi) = \phi = 1$ is a constant, and $c(y, \phi) = \ln(1_{\{0, \infty\}}(z))$. So Weibull distribution with **one parameters** $\lambda$ can rewrite as a exponential distribution, which belongs to exponential family.
+
+Further more, the expectation and variance of $Z$ are separately 
+
+$$
+E[y] = \mu = b'(\theta) = -\frac{1}{\theta} = \frac{1}{\lambda}
+$$
+
+and
+
+$$
+Var[y] = \mu'(\theta) = a(\phi)b''(\theta) = 1(\frac{1}{\theta^2}) = \frac{1}{\lambda^2}
+$$
+
+
+
+## b. Negative binomial distribution
+
+Let $Y \sim NB(r, p)$, where $Y$ denote the number of failures before the $r$th success, $r > 0$ is a **known** positive integer and $p \in [0, 1]$ is a **unknown** parameter. 
+The pdf of $Y$ is
+
+$$
+\begin{align}
+f(y | r, p) &= {r+y-1 \choose y} p^r (1-p)^y 1_{\{0, 1, \dots\}}(y) \\
+&= \exp\left\{ y\ln(1-p) + r\ln(p) + \ln\left({r+y-1 \choose y}1_{\{0, 1, \dots\}}(y)\right)\right\}\\
+&= \exp\left\{\frac{y(\frac{1}{r}\ln(1-p)) + \ln(p)}{1/r} + \ln\left({r+y-1 \choose y}1_{\{0, 1, \dots\}}(y)\right)\right\}\\
+&= \exp\left\{ \frac{y\theta - b(\theta)}{a(\phi)} + c(y, \phi) \right\}
+\end{align}
+$$
+
+where $\theta = \frac{1}{r}\ln(1-p) \Rightarrow p = 1-e^{r\theta}$, $b(\theta) = -\ln(1-e^{r\theta}) = -\ln(1-p)$, $a(\phi) = \phi = 1/r$ is a constant (since $r$ is known), and $c(y, \phi) = \ln\left({\phi^{-1}+y-1 \choose y}1_{\{0, 1, \dots\}}(y)\right) = \ln\left({r+y-1 \choose y}1_{\{0, 1, \dots\}}(y)\right)$. So the negative binomial distribution belongs to the exponential family.
+
+It follows, as expected, that 
+
+$$
+E[y] = \mu = b'(\theta) = \frac{re^{r\theta}}{1-e^{r\theta}} = r\frac{1-p}{p}
+$$
+
+and 
+
+$$
+Var[y] = \mu'(\theta) = a(\phi)b''(\theta) = r(\frac{r^2e^{r\theta}}{1-e^{r\theta}} + \frac{r^2(e^{r\theta})^2}{(1-e^{r\theta})^2}) = r(\frac{1-p}{p} + \frac{(1-p)^2}{p^2}) = r\frac{1-p}{p^2}
+$$
+
+
+## c. Gamma distribution
+
+Let $Y \sim Gamma(\alpha, \beta)$, with two unknown parameters $\alpha, \beta > 0$. The pdf of $Y$ is
+
+$$
+\begin{align}
+f(y | \alpha, \beta) &= \frac{y^{\alpha-1}e^{-\frac{y}{\beta}}}{\Gamma(\alpha) \beta^\alpha}1_{(0, \infty)}(y) \\
+&= \exp\left\{ y(-\frac{1}{\beta}) + \alpha \ln(\frac{1}{\beta}) + (\alpha-1)\ln(y) - \ln(\Gamma(\alpha)) + \ln(1_{(0, \infty)}(y)) \right\} \\
+&= \exp\left\{ \frac{y(-\frac{1}{\alpha \beta}) + \ln(\frac{1}{\alpha \beta})}{1/\alpha} + \left( (\alpha-1)\ln(y) - \ln(\Gamma(\alpha)) + \ln(1_{(0, \infty)}(y)) \right) \right\} \\
+&= \exp\left\{ \frac{y\theta - b(\theta)}{a(\phi)} + c(y, \phi) \right\}
+\end{align}
+$$
+
+where $\theta = -\frac{1}{\alpha \beta}$, $b(\theta) = -\ln(-\theta) = -\ln(\frac{1}{\alpha \beta})$, $a(\phi) = \phi = 1/\alpha$, and $c(y, \phi) = (\phi^{-1}-1)\ln(y) - \ln(\Gamma(\phi^{-1})) + \ln(1_{(0, \infty)}(y)) = (\alpha-1)\ln(y) - \ln(\Gamma(\alpha)) + \ln(1_{(0, \infty)}(y))$. So gamma distribution belongs to the exponential family.
+
+It follows, as expected, that 
+
+$$
+E[y] = \mu = b'(\theta) = -\frac{1}{\theta} = \alpha\beta 
+$$
+
+and 
+
+$$
+Var[y] = \mu'(\theta) = a(\phi)b''(\theta) = \frac{1}{\alpha}(\frac{1}{\theta^2}) =\frac{1}{\alpha}(\alpha\beta)^2 = \alpha\beta^2
+$$
