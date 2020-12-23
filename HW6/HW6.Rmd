@@ -29,6 +29,7 @@ knitr::kable(data, digits = 2)
 
 # **Fit a binomial regression model. Check if logit or probit models are satisfactory. Can you find a better fit? Please do residual analysis and check transformations of the dose scale and models with overdispersion.**
 
+
 Our binomial regression model is
 
 $$
