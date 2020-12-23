@@ -1,0 +1,95 @@
+---
+title: "referendum14_map"
+author: "心理所碩二 R08227112 林子堯"
+date: "`r Sys.Date()`"
+output: ioslides_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+```
+
+## 第14案公投結果與各變項地圖
+
+
+```{r include=FALSE}
+library(tidyverse)
+library(sp)
+# devtools::install_github("sheethub/RTaiwan")
+library(RTaiwan)
+library(rgdal)
+library(leaflet)
+library(htmltools)
+library(htmlwidgets)
+library(htmlTable)
+
+```
+
+
+```{r include=FALSE}
+Data <- readRDS("data/Data.rds")
+referendum14 <- Data %>% 
+  select(agree_rate)
+
+referendum14$agree_rate <- round(referendum14$agree_rate, digits = 3)
+.labels <- cut(referendum14$agree_rate, breaks = seq(0, 0.5, 0.05), include.lowest = TRUE)
+.labels <- gsub(",", " ~ ", .labels, fixed=TRUE)
+.labels <- gsub("\\(|\\[|\\]", "", .labels)
+Data$group <- .labels
+Data$site_id <- rownames(Data)
+
+.Data_select <- Data %>% 
+  select(group, site_id, is_municipality)
+.Data_select2 <- Data %>% 
+  select(agree_rate, vote_rate, gender_ratio, age_med, 
+         married_ratio, college_ratio, salary_med) %>% 
+  round(digits = 3)
+Data_select <- cbind(.Data_select, .Data_select2)
+```
+
+
+```{r include=FALSE}
+data(TaiwanTownArea, package = "RTaiwan")
+proj4string(TaiwanTownArea)
+TTA <- spTransform(TaiwanTownArea, CRS("+init=epsg:4326"))
+
+TTA@data <- TTA@data %>%
+  mutate(site_id = paste0(COUNTY, TOWN))
+TTA@data$site_id[which(TTA@data$site_id == "彰化縣員林鎮")] = "彰化縣員林市"
+TTA@data$site_id[which(TTA@data$site_id == "苗栗縣頭份鎮")] = "苗栗縣頭份市"
+TTA@data <- TTA@data %>%
+  left_join(Data_select, by = "site_id")
+
+pal <- colorNumeric(
+  palette = "Spectral",
+  domain = TTA@data$agree_rate)
+```
+
+```{r, out.width="100%"}
+TTA.map <- leaflet(TTA) %>%
+  addPolygons(color = "#444444",
+              weight = 1,
+              fillColor = ~ pal(agree_rate),
+              fillOpacity = 0.8,
+              highlightOptions = highlightOptions(color = "white", weight = 2, bringToFront = TRUE),
+              popup = lapply(1:368, 
+                             function(row){
+                               htmlTable(gather(key = "類別", value = "值", 
+                                                TTA@data[row, c("site_id", "agree_rate", "vote_rate",
+                                                                "is_municipality", "gender_ratio",
+                                                                "age_med", "married_ratio",
+                                                                "college_ratio", "salary_med")]))})) %>%
+  addLegend("bottomleft",
+            title = "公投第14案同意率",
+            pal = pal,
+            values = ~ agree_rate)
+```
+
+
+```{r, out.width="100%"}
+saveWidget(TTA.map, file="referendum14_map.html")
+
+#mapview::mapshot(TTA.map, "test.png")
+
+#TTA.map
+```
