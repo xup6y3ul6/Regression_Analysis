@@ -1,0 +1,262 @@
+---
+title: "Regression analysis_Data Analysis Exam"
+author: "心理所碩二 R08227112 林子堯"
+date: "2020/12/14"
+output: 
+  html_document:
+    css: style.css
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	message = FALSE, 	warning = FALSE, comment = "",
+	fig.align = "center",	eval = TRUE
+)
+```
+
+
+
+Please follow the instructions below:
+
+- training.csv is the dataset for regression analysis
+- testing.csv are the "future" observations
+
+The goals are to build a “best” regression model (1) to interpret the predictor variables concerning the response variable and (2) to predict the “future” observations. 
+You may focus on linear regression models in this analysis. Please summarize your results with at least the following main items:
+
+(You may compile all other supporting materials in the appendix.)
+
+
+載入必要的套件和資料
+
+```{r}
+library(tidyverse)
+library(leaps)
+```
+
+```{r}
+training_data <- read.csv("training.csv")
+testing_data <- read.csv("testing.csv")
+head(training_data)
+training_data$x4 <- factor(training_data$x4)
+testing_data$x4 <- factor(testing_data$x4)
+```
+
+
+# 1. Select the “best” model among the possible candidates considered.
+
+## (1) State your final regression model explicitly, including the model assumptions.
+
+
+```{r}
+train_best <- lm(Y ~ x3 + x4 + x5 + x7 + x3:x4 + x3:x7 + x4:x7, data = training_data)
+summary(train_best)
+AIC(train_best)
+BIC(train_best)
+```
+
+ 這是我目前找到最佳的的模型為，
+ 
+ $$
+ \begin{align}
+\hat{Y} = \hat\beta_0 + \hat\beta_1X_3 + \hat\beta_2X_4 + \hat\beta_3X_5 + \hat\beta_4X_7 + \hat\beta_5X_3X_4 + \hat\beta_6X_3X_7 + \hat\beta_6X_4X_7  
+\end{align}
+ $$
+其中模型的假設為：
+
+- 所有資料點是獨立的
+- 解釋變項 $\boldsymbol{X}$ 和 預測變相 $Y$ 之間有線性關係
+- Additive error
+- Errors $\varepsilon_i \sim iid  N(0, \sigma)$，i = 1, ..., N，且具有 homoscedasticity 的性質
+
+
+
+
+## (2) Briefly describe your model building procedure toward this final model. Give your reasons for choosing this model.
+
+我先透過不考慮有交互作用項的模型，並使用 R 原生套件 `stats` 逐步回歸的方式 `step()`，考慮 $Y = \beta_0 + \beta_1 x_1 + ... + \beta_8 x_8$ 下最佳模型，其中以 AIC 作為判准，得到的結果為
+
+```{r}
+train_lm_all <- lm(Y ~ x1+x2+x3+x4+x5+x6+x7+x8, data = training_data)
+train_lm_step <- step(train_lm_all, direction = "both", trace = 0)
+summary(train_lm_step)
+AIC(train_lm_step)
+BIC(train_lm_step)
+```
+
+$$
+Y \sim x3 + x4 + x5 + x7
+$$
+
+此時我再加入考慮所有的二階交互作用項，同樣是使用逐步回歸的方式，以 AIC 作為判准，得到的結果為
+
+```{r}
+train_lm_2way <- lm(Y ~ (x1+x2+x3+x4+x5+x6+x7+x8)^2, data = training_data)
+train_lm_2way_step <- step(train_lm_2way, direction = c("both"), trace = 0)
+summary(train_lm_2way_step)
+AIC(train_lm_2way_step)
+BIC(train_lm_2way_step)
+```
+
+如上所示，雖然此解果 AIC 明顯小於原先沒有考慮交互作用項的模型，但是各個 $\beta$ 都不一定有顯著，這樣難以後續的解釋。因此我先拿掉表現最差的 $x8$，
+
+
+```{r}
+train_lm_no8 <- lm(Y ~ x1 + x3 + x4 + x5 + x6 + x7 + x1:x5 + x1:x6 + x1:x7  + x3:x4 + x3:x7  + x4:x7 + x6:x7,
+    data = training_data)
+summary(train_lm_no8)
+AIC(train_lm_no8)
+BIC(train_lm_no8)
+```
+```{r}
+anova(train_lm_no8, train_lm_2way_step)
+```
+
+與先前模型沒有顯著的差異，而且 AIC BIC 還便小了。因次我繼續拿掉一些可能不重要的變量。經過幾論嘗試後，下方可能是我目前找到的最佳模型。
+
+
+```{r}
+train_lm_no8_no1and7 <- lm(Y ~ x3 + x4 + x5 +  x7 + x3:x4 + x3:x7  + x4:x7 ,
+    data = training_data)
+summary(train_lm_no8_no1and7)
+AIC(train_lm_no8_no1and7)
+BIC(train_lm_no8_no1and7)
+```
+
+
+另一方面，我用運立一個 R 套件幫我尋找出前十五個較佳模型，他可以用 adjust $R^2$, Mallos Cp 和 BIC 的指標幫我做判准，但一樣我這邊也只考慮到二階交互作用項而已。其結果為
+
+```{r}
+train_lm_temp <- regsubsets(Y ~ (x1+x2+x3+x4+x5+x6+x7+x8)^2, 
+                            training_data, 
+                            nvmax=15, 
+                            method='backward')
+
+(train_lm_temp_smry <- summary(train_lm_temp))
+
+```
+
+```{r}
+which.min(train_lm_temp_smry$cp)
+train_lm_temp_smry$cp[9]
+which.max(train_lm_temp_smry$adjr2)
+train_lm_temp_smry$adjr2[15]
+which.min(train_lm_temp_smry$bic)
+train_lm_temp_smry$bic[3]
+```
+
+然而這邊比較可惜的是，雖然有找到幾格不錯的模型，但是他會都保瞭二階交互作用項而忽略掉低階項，因此在這邊我就不先考慮了。
+
+
+
+# 2. Show the validity of your final model by demonstrating the residual analysis for model check.
+
+```{r}
+residual <- data.frame(
+  res = residuals(train_best),
+  stand_res = rstandard(train_best),
+  student_res = rstudent(train_best),
+  fit = fitted(train_best)
+)
+```
+
+**Independent**
+
+首先我們先檢查 residual 會不會隨著資料的排序有系統性的關係
+
+```{r}
+plot(residual$res)
+```
+
+上圖中，沒有發顯 residual 有任何不獨立或自回歸的狀況。
+
+**Outlier**
+
+```{r}
+ggplot(residual, aes(x = fit, y = student_res)) +
+  geom_point() +
+  geom_hline(yintercept = qt(c(0.025, 0.975), train_best$df.residual - 1), color = "red")
+```
+
+這邊檢查了 studentized residual，發現有少數幾點可能是 outliers 的傾向，但在這邊沒有資料點的詳細資訊，因此判定為 outlier 還有帶保留
+
+
+**Homoscedasticity**
+
+在此檢查 residuals 有沒有違反 homoscedasticity 的假設
+```{r}
+library(lmtest)
+bptest(train_best, studentize = TRUE)
+```
+
+透過 Breusch–Pagan test 得到 p-value > .05，沒有拒絕虛無假設，說明此筆資料應該是沒有違反homoscedasticity 的假設。
+
+**Normality**
+
+```{r}
+hist(residual$stand_res, bins = 30)
+qqnorm(residual$stand_res)
+qqline(residual$stand_res, col = "red")
+```
+
+大部分的點坐落在紅色的斜直線上，顯示與 normal distribution 接近。然而在左尾的部分可能要比真實的常態分配要來的厚，因此 normality assumption 可能需要注意！
+
+
+# 3. Calculate the leave-one-out cross-validation prediction errors based on your final model.
+
+我們知道 leave-one-out cross-validation prediction errors 的公式為：
+
+$$
+CV = \frac{1}{n} \sum_{i=1}^n(\frac{y_i - \hat{y}_i}{1 - h_{ii}})^2
+$$
+```{r}
+h <- hatvalues(train_best)
+Y <- training_data$Y
+Y_hat <- fitted(train_best) 
+n <- nrow(training_data)
+
+CV <- 1/n * sum( ( (Y-Y_hat)/(1-h) )^2)
+CV
+```
+得到的 CV 為 $CV \approx 681$。
+
+
+# 4. Use the test data set to calculate the squared prediction errors (sum) based on your final model. Display the prediction outcome by plotting predicted vs. observed.
+
+```{r}
+test_predict <- data.frame(
+  predict_value = predict(train_best, testing_data),
+  true_value = testing_data$Y
+)
+
+test_predict <- test_predict %>% 
+  mutate(predict_error = predict_value - true_value)
+
+(SSE_predict <- sum((test_predict$predict_error)^2))
+(MSE_predict <- SSE_predict / nrow(testing_data))
+(RMSE_predict <- sqrt(MSE_predict))
+```
+結果為
+
+- Sum of squared (prediction) errors = 9859.91
+- Root mean square (prediction) errors = 18.13
+
+另一方面，
+
+```{r}
+g1 <- ggplot(test_predict, aes(x = true_value, y = predict_value)) +
+  geom_point() +
+  geom_abline(slope = 1, intercept = 0, color = "red")
+g2 <- ggplot(test_predict, aes(x = true_value, y = predict_error)) +
+  geom_point() +
+  geom_hline(yintercept = 0, color = "red")
+gridExtra::grid.arrange(g1, g2, nrow = 1)
+```
+
+左圖為 testing data 的真實值 $Y$ 與用我目前模型所得到的預測值 $\hat{Y}$，可觀察到預測值與真實值有相似的趨勢，$Y$ 越高 $\hat{Y}$ 也越高，且大致落在斜率為1的斜直線上。然而我們看到右圖，為 prediction error $\hat{Y}-Y$ 與 $Y$ 的散佈圖，雖然預測誤差坐落在 0 的上下，然而很明顯的可以發現還是有系統信的誤差存在，當 $Y$ 低的時候 $\hat{Y}$ 有高估，而當 $Y$ 高的時候 $\hat{Y}$ 有低估的現象產生。因此推測其實我目前的到的「最佳」模型，其實還是少了一些重要的解釋變項在裡頭，可能被我給忽略了。
+ 
+
+
+
+
+
