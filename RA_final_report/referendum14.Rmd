@@ -1,0 +1,734 @@
+---
+title: "迴歸分析_期末報告"
+subtitle: "2018 年公投第 14 案_廣義線性回歸模型探討"
+author:  "心理所碩二 R08227112 林子堯"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    css: style.css
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  message = FALSE, 	warning = FALSE, comment = "",
+  echo = TRUE
+)
+```
+
+
+# Load Data and packages
+
+```{r}
+library(tidyverse)
+library(gghighlight)
+library(gridExtra)
+library(car)
+library(glmulti)
+library(boot)
+library(leaps)
+library(MPV)
+library(DT)
+```
+
+```{r}
+Data <- readRDS("data/Data.rds")
+source("custom_function.R")
+```
+
+```{r}
+str(Data)
+```
+
+
+# Variables
+
+## Dependent variable Y: agree_rate
+
+```{r, fig.asp=1}
+get_histogram(Data, "agree_rate")
+```
+
+link: <referendum14_map.html>
+
+![](figures/map.png) 
+
+## Independent variable X1: vote_rate
+
+```{r, fig.asp=1}
+get_histogram(Data, "vote_rate")
+get_scatter_plot(Data, "vote_rate")
+```
+
+## Independent variable X2: location
+
+```{r, fig.asp=1}
+ggplot(Data, aes(x = location, y = agree_rate, color = location)) +
+  geom_boxplot() +
+  theme_bw() +
+  theme(legend.position = "none")
+```
+
+
+## Independent variable X3: gender_ratio
+
+```{r, fig.asp=1}
+get_histogram(Data, "gender_ratio")
+get_scatter_plot(Data, "gender_ratio")
+```
+
+## Independent variable X4: age_med
+
+```{r, fig.asp=1}
+get_histogram(Data, "age_med")
+get_scatter_plot(Data, "age_med")
+```
+
+## Independent variable X5: married_ratio
+
+```{r, fig.asp=1}
+get_histogram(Data, "married_ratio")
+get_scatter_plot(Data, "married_ratio")
+```
+
+## Independent variable X6: college_ratio
+
+```{r, fig.asp=1}
+get_histogram(Data, "college_ratio")
+get_scatter_plot(Data, "college_ratio")
+```
+
+## Independent variable X7: salary_med
+
+```{r, fig.asp=1}
+get_histogram(Data, "salary_med")
+get_scatter_plot(Data, "salary_med")
+```
+
+
+## Scatter plot matrix
+
+```{r, fig.asp = 1}
+data <- Data %>% 
+  select(agree_rate,     # Y
+         vote_rate,      # X1
+         location,       # X2 
+         gender_ratio,   # X3
+         age_med,        # X4
+         married_ratio,  # X5
+         college_ratio,  # X6
+         salary_med)     # X7
+
+names(data) <- c("agree",
+                 "vote",
+                 "location",
+                 "gender",
+                 "age",
+                 "married",
+                 "college",
+                 "salary")
+
+ggpairs(data, 
+        lower = list(continuous = custom_cor_color),
+        upper = list(continuous = custom_smooth)) 
+```
+
+```{r, fig.asp=1}
+data %>% 
+  pivot_longer(cols = -location, names_to = "variable", values_to = "value") %>% 
+  mutate(variable = factor(variable, levels = c("vote", "gender", "age", "married", "college", "salary", "agree"))) %>% 
+  ggplot(aes(x = value, fill = location)) + 
+  geom_histogram(color = "white") +
+  facet_wrap(~ variable, nrow = 3, scale = "free") +
+  theme_bw() +
+  theme(legend.position = c(0.85, 0.15))
+```
+
+
+# Model fitting
+
+## binomial regression (identity, logit, probit or cloglog link)
+
+```{r}
+.formula <- agree_rate ~ 1 + vote_rate + location + gender_ratio + age_med + married_ratio + college_ratio + salary_med
+
+binom_ident <- glm(formula = .formula, weights = valid_vote, 
+                   family = binomial(link = "identity"), data = Data)
+binom_logit <- glm(formula = .formula, weights = valid_vote,
+                   family = binomial(link = "logit"), data = Data)
+binom_probit <- glm(formula = .formula, weights = valid_vote,
+                    family = binomial(link = "probit"), data = Data)
+binom_cloglog <- glm(formula = .formula, weights = valid_vote,
+                     family = binomial(link = "cloglog"), data = Data)
+```
+
+
+```{r}
+summary(binom_ident)
+summary(binom_logit)
+summary(binom_probit)
+summary(binom_cloglog)
+```
+
+## Fitted value ($\pi$ and $\eta$) and residual plot
+
+```{r}
+binom_models <- list(binom_ident, binom_logit, binom_probit, binom_cloglog)
+model_names <- c("binom_identity", "binom_logit", "binom_probit", "binom_cloglog")
+model_colors <- c("steelblue4", "steelblue3", "steelblue2", "steelblue1")
+```
+
+### Fitted value $\pi = g(\eta) = g(X\beta)$
+
+```{r, fig.asp=1}
+binom_fitted_plots <- vector(mode = "list", length = length(binom_models))
+
+for (i in 1:length(binom_models)) {
+  binom_fitted_plots[[i]] <- get_fitted_plot(binom_models[[i]], model_names[i], model_colors[i])
+}
+
+grid.arrange(grobs = binom_fitted_plots, nrow = 2)
+```
+
+
+### Fitted value $\eta = X\beta$
+
+```{r, fig.asp=1}
+xlims <- list(c(0.1, 0.5), c(-2.5, 2.5), c(-2.5, 2.5), c(-2.5, 2.5))
+
+binom_eta_plots <- vector(mode = "list", length = length(binom_models))
+
+for (i in 1:length(binom_models)) {
+  binom_eta_plots[[i]] <- get_eta_plot(binom_models[[i]], model_names[i], model_colors[i], xlims[[i]])
+}
+
+grid.arrange(grobs = binom_eta_plots, nrow = 2)
+```
+
+
+### Residual plot
+
+```{r, fig.asp=1}
+binom_rstandard_plots <- vector(mode = "list", length = length(binom_models))
+
+for (i in 1:length(binom_models)) {
+  binom_rstandard_plots[[i]] <- get_rstandard_plot(binom_models[[i]], model_names[i], model_colors[i], "deviance")
+}
+
+grid.arrange(grobs = binom_rstandard_plots, nrow = 2)
+```
+
+
+# Diagnosis of the binomial regression with identity link
+
+## Residual plots
+
+```{r}
+residualPlots(binom_ident, col = "dimgray", 
+              smooth = list(smoother=loessLine, span=2/3, col = "tomato"))
+```
+
+```{r, fig.asp = 1}
+avPlots(binom_ident, id = FALSE, col = "dimgray", col.lines = "tomato")
+```
+
+
+
+
+
+
+
+
+
+
+
+
+# Find the best model
+
+## Consider all interaction terms
+
+```{r}
+.f2 <- agree_rate ~ 1 + (vote_rate+ location + gender_ratio + age_med + married_ratio + college_ratio + salary_med)^2
+binom_ident2 <-  glm(formula = .f2, weights = valid_vote, 
+                     family = binomial(link = "identity"), data = Data)
+summary(binom_ident2)
+```
+
+
+
+## best glm
+
+### step
+
+```{r}
+.f0 <- agree_rate ~ 1
+binom_ident0 <-  glm(formula = .f0, weights = valid_vote, 
+                     family = binomial(link = "identity"), data = Data)
+```
+
+```{r}
+.scope <- list(lower = .f0, upper = .f2)
+M1 <- step(binom_ident0, scope = .scope, direction = "forward", trace = 0)
+M2 <- step(binom_ident0, scope = .scope, direction = "forward", trace = 0, k = log(nrow(Data)))
+M3 <- step(binom_ident2, direction = "backward", trace = 0)
+M4 <- step(binom_ident2, direction = "backward", trace = 0, k = log(nrow(Data)))
+M5 <- step(binom_ident2, direction = "both", trace = 0)
+M6 <- step(binom_ident2, direction = "both", trace = 0, k = log(nrow(Data)))
+```
+
+### glmulti package
+
+```{r}
+binom_ident_glmulti_AIC <- 
+  glmulti(y = .formula, data = Data, weights = Data$valid_vote, 
+          family = binomial(link = "identity"),
+          plotty = FALSE, report = FALSE, 
+          level = 2, confsetsize = 3, crit = "aic", 
+          method = "g")
+binom_ident_glmulti_BIC <- 
+  glmulti(y = .formula, data = Data, weights = Data$valid_vote, 
+          family = binomial(link = "identity"),
+          plotty = FALSE, report = FALSE, 
+          level = 2, confsetsize = 3, crit = "bic", 
+          method = "g")
+
+.M7 <- binom_ident_glmulti_AIC@objects[[1]]
+M7 <- glm(formula = .M7$formula, data = Data, weights = valid_vote,
+          family = binomial(link = "identity"))
+.M8 <- binom_ident_glmulti_AIC@objects[[2]]
+M8 <- glm(formula = .M8$formula, data = Data, weights = valid_vote,
+          family = binomial(link = "identity"))
+.M9 <- binom_ident_glmulti_AIC@objects[[3]]
+M9 <- glm(formula = .M9$formula, data = Data, weights = valid_vote,
+          family = binomial(link = "identity"))
+.M10 <- binom_ident_glmulti_BIC@objects[[1]]
+M10 <- glm(formula = .M10$formula, data = Data, weights = valid_vote,
+          family = binomial(link = "identity"))
+.M11 <- binom_ident_glmulti_BIC@objects[[2]]
+M11 <- glm(formula = .M11$formula, data = Data, weights = valid_vote,
+          family = binomial(link = "identity"))
+.M12 <- binom_ident_glmulti_BIC@objects[[3]]
+M12 <- glm(formula = .M12$formula, data = Data, weights = valid_vote,
+          family = binomial(link = "identity"))
+```
+
+```{r}
+Models <- list(M1, M2, M3, M4, M5, M6, M7, M8, M9, M10, M11, M12)
+
+criterias <- data.frame(
+  AIC = sapply(Models, AIC),
+  BIC = sapply(Models, BIC),
+  Deviance = sapply(Models, deviance),
+  CV = sapply(Models, function(model){cv.glm(Data, model)$delta[1]}) # LEAVE ONE OUT=
+)
+```
+
+```{r}
+criterias
+```
+
+
+```{r}
+M2$formula
+M1$formula
+M11$formula
+M12$formula
+```
+
+
+```{r}
+binom_best <- M2
+summary(binom_best)
+```
+```{r}
+binom2 <- update(binom_best, 
+                 formula = . ~ . - location:salary_med - location:married_ratio)
+summary(binom2)
+```
+
+```{r}
+summary(binom_best)
+```
+
+
+# Check some assumption 
+
+## Influence measures
+
+```{r}
+influenceIndexPlot(binom_ident)
+```
+
+
+# Overdispersion model
+
+
+```{r}
+chisq <- sum(residuals(binom_best, type = "pearson")^2)
+phi_p <- chisq / binom_best$df.residual
+phi_p
+phi_D <- deviance(binom_best, type = "deviance") / binom_best$df.residual
+phi_D
+```
+```{r}
+quasibinom_best <- update(binom_best, 
+                             family = quasibinomial(link = "identity"))
+summary(quasibinom_best)
+```
+
+崩潰，都不顯著
+兩難：qausilikelihood model selection
+
+
+
+# Linear regression by weighted least estimate
+
+## Linear model
+
+$$
+\bar{y_i} = \boldsymbol{x_i^{\top}\beta} + \varepsilon_i, \quad \varepsilon_i \sim N(0, \sigma^2) \quad \forall i
+$$
+
+```{r}
+gauss_ident <- glm(formula = .formula, data = Data,
+                   family = gaussian(link = "identity"))
+summary(gauss_ident)
+```
+
+```{r}
+get_residual_plot(gauss_ident)
+```
+
+## Weighted least square
+
+$$
+\begin{align}
+&N_i \bar{y}_i \sim Binomial(N_i, p_i) \\
+&E[\bar{y}_i | \boldsymbol{x_i}] = p_i = g(\eta_i) = \boldsymbol{x_i^{\top}\beta} \\
+&Var[\bar{y}_i | \boldsymbol{x_i}] = \frac{p_i(1-p_i)}{N_i} \\
+\Rightarrow \quad & \bar{y}_i | \boldsymbol{x_i} \sim ~N(p_i = \boldsymbol{x_i^{\top}\beta}, \frac{p_i(1-p_i)}{N_i})
+\end{align}
+$$
+
+
+```{r}
+gauss_ident_w <- glm(formula = .formula, weights = valid_vote,
+               family = gaussian(link = "identity"), data = Data) 
+#summary(gauss_ident_w)
+
+.weight <- Data$valid_vote / (predict(gauss_ident_w)*(1-predict(gauss_ident_w)))
+gauss_ident_w2 <- glm(formula = .formula, weights = .weight,
+                family = gaussian(link = "identity"), data = Data) 
+summary(gauss_ident_w2)
+
+get_binom_XIC(gauss_ident_w2, k = 2, Npar = 10)
+```
+
+```{r}
+quasibinom_ident <- glm(formula = .formula, weight = valid_vote, 
+                        family = quasibinomial(link = "identity"), data = Data)
+summary(quasibinom_ident)
+```
+
+結果是相通的！！！！！！
+
+```{r}
+
+lm_w2 <- lm(formula = .formula, weights = .weight, data = Data)
+```
+
+
+## residual plot
+
+變異數不同值
+
+```{r}
+get_residual_plot(gauss_ident_w2)
+```
+
+```{r}
+avPlots(lm_w2, id = FALSE, col = "darkgray", col.lines = "tomato")
+```
+
+
+## Box-Cox transform
+```{r, fig.asp=1}
+lambda <-  seq(-2, 4, 0.1)
+get_boxcox_plot(lm_w2, lambda)
+```
+
+## variable relation
+
+```{r}
+ggpairs(data, 
+        lower = list(continuous = custom_cor_color),
+        upper = list(continuous = custom_smooth)) 
+```
+
+
+## model selection 
+
+
+```{r}
+# prepare data and wiehgt
+.f <- agree_rate ~ 1 + (vote_rate + location + gender_ratio + age_med + married_ratio + college_ratio + salary_med)^2
+gauss_all_w <-  glm(formula = .f, weights = .weight,
+                     gaussian(link = "identity"), data = Data)
+.weight2 <- Data$valid_vote / (predict(gauss_all_w)*(1-predict(gauss_all_w)))
+gauss_all_w2 <-  glm(formula = .f2, weights = .weight2,
+                     gaussian(link = "identity"), data = Data)
+.weight_all <- Data$valid_vote / (predict(gauss_all_w2)*(1-predict(gauss_all_w2)))
+  
+LM_data <- Data %>% 
+  mutate(agree = agree_rate, 
+          weighted = .weight_all,
+          vote = vote_rate,
+          municipality = as.numeric(as.character(is_municipality)),
+          offshoreIsland = as.numeric(as.character(is_offshoreIsland)),
+          gender = gender_ratio,
+          age = age_med, 
+          married = married_ratio,
+          college = college_ratio,
+          salary = salary_med)
+rownames(LM_data) <- rownames(data)
+```
+
+
+
+### stepwise
+
+```{r}
+.f2 <- agree~ 1 + (vote + municipality + offshoreIsland + gender + age + married + college+ salary)^2
+gauss_2 <- glm(formula = .f2, weights = weighted,
+               family = gaussian(link = "identity"), data = LM_data)
+
+.f0 <- agree ~ 1
+gauss_0 <- glm(formula = .f0, weights = weighted, 
+               family = gaussian(link = "identity"), data = LM_data)
+```
+
+```{r}
+.scope <- list(lower = .f0, upper = .f2)
+LM1 <- step(gauss_0, scope = .scope, direction = "forward", trace = 0)
+LM2 <- step(gauss_0, scope = .scope, direction = "forward", trace = 0, k = log(nrow(LM_data)))
+LM3 <- step(gauss_2, direction = "backward", trace = 0)
+LM4 <- step(gauss_2, direction = "backward", trace = 0, k = log(nrow(LM_data)))
+LM5 <- step(gauss_2, direction = "both", trace = 0)
+LM6 <- step(gauss_2, direction = "both", trace = 0, k = log(nrow(LM_data)))
+```
+
+
+### use regsubsets
+
+```{r}
+subsets <- regsubsets(x = .f2, data = LM_data, weights = LM_data$weighted, nbest = 3, nvmax = 25, force.in = c(1:7))
+
+subsets <- with(summary(subsets),
+                cbind(p = as.numeric(rownames(which)) + 2, 
+                      which, rss, rsq, adjr2, cp, bic))
+subsets <- as.data.frame(subsets)
+subsets$aic <- subsets$bic - log(nrow(LM_data))*subsets$p + 2*subsets$p
+rownames(subsets) <- NULL
+
+
+# press
+  .combination <- lapply(1:nrow(subsets), function(x){
+    colnames(subsets)[which(subsets[x, 3:(ncol(subsets)-6)] == 1)+2]
+  })
+
+  .Y <- formula(.f2) %>% as.character() %>% strsplit(" ~ ")
+  Y <- .Y[[2]]
+  combination <- lapply(.combination, function(x){
+    X <- x %>% gsub(pattern = "[0-9]", replacement = "") # remove factor name with number
+    paste(Y, "~", paste(X, collapse = "+"))
+  })
+  lm_combination <- lapply(combination, function(x){
+    lm(as.formula(x), data = LM_data, weights = LM_data$weighted)
+  })
+  press <- sapply(lm_combination, function(x){PRESS(x)})
+
+  subsets$PRESS <- press
+View(subsets)
+```
+
+```{r}
+criterion <- data.frame(
+  index = c("rsq", "adjr2", "cp", "aic", "bic", "PRESS"),
+  critera.fun = c("max", "max", "min", "min", "min", "min")
+)
+
+g <- list()
+
+for(i in 1:nrow(criterion)){
+  .index <- criterion[i, "index"]
+  .critera.fun <- criterion[i, "critera.fun"] %>% as.character()
+  
+  g[[i]] <- subsets %>% 
+    gather(key = index, value = value, rsq:PRESS) %>% 
+    filter(index == .index) %>% 
+    ggplot(aes(x = p, y = value)) +
+    geom_point(size = 0.6) +
+    scale_x_continuous(breaks = seq(min(subsets$p), max(subsets$p), 2)) +
+    stat_summary(fun.y = .critera.fun, colour = "orange", geom = "line") +
+    labs(title = .index, y = NULL) +
+    theme_bw()
+}
+
+grid.arrange(grobs = g, nrow = 2)
+```
+
+
+```{r}
+LM7 <- glm(formula = combination[[15]], weights = weighted,
+           family = gaussian(link = "identity"), data = LM_data)
+LM8 <- glm(formula = combination[[17]], weights = weighted,
+           family = gaussian(link = "identity"), data = LM_data)
+LM9 <- glm(formula = combination[[19]], weights = weighted,
+           family = gaussian(link = "identity"), data = LM_data)
+LM10 <- glm(formula = combination[[33]], weights = weighted,
+           family = gaussian(link = "identity"), data = LM_data)
+LM11 <- glm(formula = combination[[34]], weights = weighted,
+           family = gaussian(link = "identity"), data = LM_data)
+LM12 <- glm(formula = combination[[35]], weights = weighted,
+           family = gaussian(link = "identity"), data = LM_data)
+```
+
+```{r}
+LM_models <- list(LM1, LM2, LM3, LM4, LM5, LM6, LM7, LM8, LM9, LM10, LM11, LM12)
+
+LM_criterias <- data.frame(
+  AIC = sapply(LM_models, AIC),
+  BIC = sapply(LM_models, BIC),
+  binom_AIC = sapply(LM_models, function(LM_model){
+    get_binom_XIC(LM_model, k = 2, length(LM_model$codefficients)+1)
+  }),
+  binom_BIC = sapply(LM_models,function(LM_model){
+    get_binom_XIC(LM_model, k = log(nrow(Data)), length(LM_model$codefficients)+1)
+  }),
+  Deviance = sapply(LM_models, deviance),
+  CV = sapply(LM_models, function(model){cv.glm(LM_data, model)$delta[1]})
+)
+```
+
+```{r}
+LM_criterias
+```
+
+```{r}
+summary(LM_models[[10]])
+formula(LM10)
+```
+
+## VIF
+
+```{r}
+vif(LM_models[[10]])
+```
+
+
+LM5
+LM6
+LM8
+LM10
+
+
+## residual 
+```{r, fig.asp=1}
+get_residual_plot(LM10) +
+  gghighlight(abs(residual) > 0.1, label_key = name,
+              unhighlighted_params = list(color = "dimgray"))
+#get_rstandard_plot(LM10, .title = element_blank(), .color = "black", .type = "pearson") 
+```
+
+## normality test and qq plot
+
+```{r, fig.asp=1}
+qqnorm(LM10$residuals)
+qqline(LM10$residuals, col = "tomato")
+```
+
+
+
+## cook's distance
+
+```{r, fig.asp=1}
+.data <- data.frame("residual" = residuals(LM10), 
+                    "fitted_value" = predict(LM10),
+                    "Cooks_distance" = cooks.distance(LM10),
+                    "index" = 1:nrow(model.frame(LM10)), 
+                    "name" = rownames(Data)
+)
+# g_proportional <- ggplot(.data, aes(x = residual, y = fitted_value)) +
+#   geom_point(aes(size = Cooks_Distance)) +
+#   theme_bw() +
+#   theme(legend.justification=c(0,1),
+#         legend.position=c(0.7, 0.3))
+#         #legend.background = element_rect(fill="transparent"))
+ggplot(.data, aes(x = index, y = Cooks_distance)) +
+  #geom_line(color = "grey") +
+  geom_point() +
+  geom_segment(aes(x = index,y = Cooks_distance, xend = index, yend = 0)) +
+  geom_hline(yintercept = 0.5, color = "tomato") +
+  theme_bw() +
+  gghighlight(Cooks_distance > 0.1, label_key = name,
+              unhighlighted_colour = list(color = "gray"))
+#grid.arrange(g_proportional, g_index, nrow = 1)
+g_index
+```
+
+
+
+
+```{r}
+influentialDF <- data.frame(
+  "DFFITS"   = dffits(LM10) %>% round(digits = 3),
+  "Cooks_D"  = cooks.distance(LM10) %>% round(digits = 3),
+  "DFBETA"   = dfbeta(LM10) %>% round(digits = 3)
+)
+
+sketch <-  htmltools::withTags(table(
+  class = 'display',
+  thead(
+    tr(
+      th(rowspan = 2, ""),
+      th(rowspan = 2, 'DFFITS'),
+      th(rowspan = 2, 'Cooks_D'),
+      th(colspan = ncol(dfbeta(LM10)), 'DFBETA')
+    ),
+    tr(
+      lapply(paste0("b", 1:(ncol(dfbeta(LM10)))), th)
+    )
+  )
+))
+p <- LM10$coefficients %>% length()
+n <- LM10$data %>% nrow()
+DFFITS_critical <- 2*sqrt(p/n)
+#CD_50 <- pf(0.5, p, n-p)
+#CD_20 <- pf(0.2, p, n-p)
+CD_0.5 <- 0.5
+DFBETAS_critical <- 2/sqrt(n)
+
+datatable(influentialDF,
+          fillContainer = FALSE,
+          container = sketch,
+          extensions = 'FixedColumns',
+          options = list(scrollX = TRUE,
+                         fixedColumns = TRUE,
+                         pageLength = 10,
+                         autoWidth = TRUE,
+                         columnDefs = list(list(width = '65px', targets = c(0)))
+                         )) %>% 
+  formatStyle(0:ncol(influentialDF), fontSize = "10pt") %>% 
+  formatStyle("DFFITS",
+              color = styleInterval(c(-DFFITS_critical, DFFITS_critical), c('red', 'black', 'red'))) %>% 
+  formatStyle("Cooks_D",
+              color = styleInterval(c(CD_0.5), c("black", "red"))) %>% 
+  formatStyle(3:nrow(influentialDF),
+              color = styleInterval(c(DFBETAS_critical), c("black", "red")))
+```
+
+
+
+
+# Summary
+
+LM12

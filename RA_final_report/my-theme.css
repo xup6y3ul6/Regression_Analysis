@@ -1,0 +1,144 @@
+.Large { font-size: 160% }
+
+.large { font-size: 130% }
+
+.big { font-size: 115%; }
+
+.small { font-size: 70% }
+
+.tiny { font-size: 40%}
+
+.cite {
+  font-size: 14pt;
+  color: gray;
+}
+
+.margin {
+  margin-left: 2em;
+}
+
+.li_margin_tb5 {
+  margin-top: 5em;
+  margin-bottom: 5em;
+}
+
+.pull-left_25 {
+  float: left;
+  width: 25%;
+}
+.pull-left_30 {
+  float: left;
+  width: 30%;
+}
+.pull-left_30_scroll {
+  float: left;
+  width: 30%;
+  overflow-y: scroll;
+}
+.pull-right_75 {
+  float: right;
+  width: 75%;
+}
+
+.pull-right_70 {
+  float: right;
+  width: 70%;
+}
+
+h1, h2, h3, ul, p {
+  margin-top: 10px;
+  margin-bottom: 5px;
+}
+
+.remark-slide-content {
+  padding-top: 10px;
+  padding-left: 40px;
+  padding-right: 40px;
+  padding-bottom: 10px;
+  font-size: 20pt;
+  font-family: "微軟正黑體", "Segoe UI";
+}
+
+.remark-slide-content h1 {
+  text-align: center;
+  font-weight: bold;
+  text-shadow: 2px 2px 4px #111111;
+}
+
+.remark-slide-content h2 {
+    font-size: 50pt;
+}
+
+.title-slide h2 {
+  margin-top: 60px;
+  margin-bottom: 60px;
+}
+
+.title-slide h3:nth-of-type(-n+4) {
+    font-size: 25px;
+    margin: 1em;
+}
+
+.MathJax_Preview {
+  font-size: 20pt;
+}
+
+.inverse h2{
+  color: #FF1B70;
+}
+
+
+.black { color: black; }
+.white { color: white; }
+.red { color: red; }
+.blue { color: blue; }
+.green { color: green; }
+.yellow { color: yellow; }
+.orange { color: orange; }
+.purple { color: purple; }
+.gray { color: gray; }
+.grey { color: gray; }
+.lightPink { color: #FF1B70; }
+.tomato{ color: #ff6347; }
+.steelblue{ color; #4682b4; }
+
+.scroll-box-8 {
+  height:8em;
+  overflow-y: scroll;
+}
+.scroll-box-10 {
+  height:10em;
+  overflow-y: scroll;
+}
+.scroll-box-12 {
+  height:12em;
+  overflow-y: scroll;
+}
+.scroll-box-14 {
+  height:14em;
+  overflow-y: scroll;
+}
+.scroll-box-16 {
+  height:16em;
+  overflow-y: scroll;
+}
+.scroll-box-18 {
+  height:18em;
+  overflow-y: scroll;
+}
+.scroll-box-20 {
+  height:20em;
+  overflow-y: scroll;
+}
+.scroll-box-24 {
+  height:24em;
+  overflow-y: scroll;
+}
+.scroll-box-28 {
+  height:28em;
+  overflow-y: scroll;
+}
+.scroll-output {
+  height: 85%;
+  overflow-y: scroll;
+}
