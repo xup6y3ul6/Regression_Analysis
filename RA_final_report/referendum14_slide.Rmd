@@ -273,7 +273,7 @@ $同意率 = \frac{同意票數}{有效票數}$
 
 .pull-right_70[
 ```{r}
-knitr::include_graphics("figures/vote_rate.png")
+knitr::include_graphics("figures/agree_rate.png")
 ```
 ]
 
@@ -297,7 +297,7 @@ $投票率 = \frac{投票數}{可投票人數}$
 
 .pull-right_70[
 ```{r}
-knitr::include_graphics("figures/agree_rate.png")
+knitr::include_graphics("figures/vote_rate.png")
 ```
 ]
 
@@ -796,7 +796,7 @@ knitr::include_graphics("figures/Box_Cox_transformation.png")
 
 .blue[leaps 套件的函式 `regsubsets()`] 來搜尋模型候選 .cite[(Lumley, 2020)] 
 
-- adjust R2、Mallows’s CP、AIC、BIC、PRESS
+- adjust R2、Mallows’ CP、AIC、BIC、PRESS
 
 再挑選了6個候選模型
 
@@ -996,8 +996,8 @@ $$
 .small[
 $$
 \begin{align}
-\left(Agree\_rate\right) = \color{blue}{3.00}-0.19\left(Vote\right)-0.28\left(Gender\right)\color{#ff6347}{-0.029\left(Age\right)-4.34\left(Married\right)} \\ 
-\color{#ff6347}{-2.08\left(College\right)}\color{blue}{+4.33\ \times\ {10}^{-4}\left(Salary\right)}+0.76\left(Gender:College\right) \\ +0.06\left(Age:Married\right)-7.04\ \times\ {10}^{-6}\left(Age:Salary\right)+2.10(Married:College)
+\left(Agree\_rate\right) = 3.00-0.19\left(Vote\right)-0.28\left(Gender\right)-0.029\left(Age\right)-4.34\left(Married\right) \\ 
+-2.08\left(College\right)+4.33\ \times\ {10}^{-4}\left(Salary\right)+0.76\left(Gender:College\right) \\ +0.06\left(Age:Married\right)-7.04\ \times\ {10}^{-6}\left(Age:Salary\right)+2.10(Married:College)
 \end{align}
 $$
 ]
@@ -1007,8 +1007,8 @@ $$
 .small[
 $$
 \begin{align}
-\left(Agree\_rate\right) = \color{blue}{3.60}-0.19\left(Vote\right)\color{#ff6347}{-0.28\left(Gender\right)-0.05\left(Age\right)}-3.44\left(Married\right) \\
-\color{#ff6347}{-2.61\left(College\right)}+3.33\ \times\ {10}^{-4}\left(Salary\right)+0.76\left(Gender:College\right) \\ +0.06\left(Age:Married\right)-7.04\ \times\ {10}^{-6}\left(Age:Salary\right)+2.10(Married:College)
+\left(Agree\_rate\right) = 3.60-0.19\left(Vote\right)-0.28\left(Gender\right)-0.05\left(Age\right)-3.44\left(Married\right) \\
+-2.61\left(College\right)+3.33\ \times\ {10}^{-4}\left(Salary\right)+0.76\left(Gender:College\right) \\ +0.06\left(Age:Married\right)-7.04\ \times\ {10}^{-6}\left(Age:Salary\right)+2.10(Married:College)
 \end{align}
 $$
 ]
